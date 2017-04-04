@@ -1,0 +1,15 @@
+{
+  "name": "boggle",
+  "version": "1.0.0",
+  "description": "a better multiplayer boggle with solution validation. Designed as a table top replacement to be played on tablets or other flat touchscreen devices.",
+  "main": "server/index.js",
+  "scripts": {
+    "test": "server/test.js"
+  },
+  "author": "Alan Synnestvedt",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2"
+  }
+}
