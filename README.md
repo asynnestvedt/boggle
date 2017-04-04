@@ -1,2 +1,2 @@
 # boggle
-A version designed for tablets and flat touchscreens to replace the board game in multiplayer table top use.
+a better multiplayer boggle with solution validation. Designed as a table top replacement to be played on tablets or other flat touchscreen devices.
