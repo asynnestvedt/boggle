@@ -4,7 +4,7 @@
   "description": "a better multiplayer boggle with solution validation. Designed as a table top replacement to be played on tablets or other flat touchscreen devices.",
   "main": "server/index.js",
   "scripts": {
-    "test": "server/test.js"
+    "test": "server/test/index.js"
   },
   "author": "Alan Synnestvedt",
   "license": "ISC",
