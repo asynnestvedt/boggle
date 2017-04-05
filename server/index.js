@@ -37,7 +37,11 @@ app.post("/api/solve", function(req, res, next){
 });
 
 app.get('/*', function(req, res){
-  res.sendFile(conf.paths.public+'/index.html');
+    res.sendFile(conf.paths.public+'/index.html');
+});
+
+app.get('*', function(req, res){
+    res.send('looking for something?', 404);
 });
 
 var port = process.env.PORT || conf.http.defaultPort;
