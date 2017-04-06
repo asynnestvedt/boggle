@@ -11,19 +11,47 @@ class App {
             sounds: {
                 shake: new Audio('assets/dice-shake.mp3')
             },
-        };
+            timer: new Timer({
+                bars: [
+                    document.getElementById('pbarx'),
+                    document.getElementById('pbarxinv'),
+                    document.getElementById('pbary'),
+                    document.getElementById('pbaryinv'),
+                ],
+                orientations: [
+                    ProgressBar.orient.X,
+                    ProgressBar.orient.XINV,
+                    ProgressBar.orient.Y,
+                    ProgressBar.orient.YINV,
+                ]
+            })
+        }
+    
         this.uiPause = false;
-        // this.shake();
+        this.data.screenMgr = new ScreenManager(document.getElementById('bggl-fullscr'));
     }
 
     shake() {
-        let test = new ApiGet('/api/board/4x4',function(response) {
+        let dimen = this.data.settings.dimensions;
+        let test = new ApiGet('/api/board/'+this.data.settings.dimensions,function(response) {
             if (response) {
                 this.data.board.render(response.data);
                 this.data.sounds.shake.play();
+                this.data.timer.start(this.data.settings.duration,0.1, function(){
+                    console.log('game over');
+                });
             }
         }.bind(this));
     }
+
+    reqSolution() {
+        /** hit server to get solution of word list and correspoding cube order */
+    }
+
+    gameover() {
+        /** display EOGame word list */
+    }
+
 }
 
 class Settings {
@@ -36,7 +64,8 @@ class Settings {
         
         /** defaults */
         this.players = 2;
-        this.dimensions = '4x4';
+        this.dimensions = '5x5';
+        this.duration = 180;
         this.callback = callback || this.defaultHandler;
         
         /** bind events */ 
@@ -44,6 +73,26 @@ class Settings {
     }
 
     defaultHandler(evt) {
+        let action='',value='';
+        try {
+            action = evt.srcElement.getAttribute('data-action');
+            value = evt.srcElement.value;
+        } catch (e) {
+            console.log(e);
+        }
+
+        switch(action) {
+            case 'players':
+                this.players = parseInt(value);
+                break;
+            case 'boardsize':
+                this.dimensions = value;
+                break;
+            case 'duration':
+                this.duration = parseInt(value);
+                break;
+        }
+
         console.log(evt);
         return false;
     }
@@ -167,4 +216,74 @@ class ApiPost extends ApiRequest{
     }
 }
 
+class ScreenManager {
+    constructor(el, doToggle) {
+        if (!el) return false;
+
+        this.el = el;
+        this.init();
+        if (doToggle) {
+            this.toggleFullScreen();
+        }
+    }
+
+    init() {
+        this.bindEsc();
+        this.bindClick()
+        this.render();
+    }
+
+    bindClick() {
+        this.el.onclick = function() {
+            this.toggleFullScreen();
+        }.bind(this);
+    }
+
+    bindEsc() {
+        document.addEventListener("keydown", function(e) {
+            if (e.keyCode == 27) {
+                if (document.cancelFullScreen) {
+                    document.cancelFullScreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitCancelFullScreen) {
+                    document.webkitCancelFullScreen();
+                }
+            }
+        }, false);
+    }
+
+    toggleFullScreen() {
+        if ((document.fullScreenElement && document.fullScreenElement !== null) ||    // alternative standard method
+            (!document.mozFullScreen && !document.webkitIsFullScreen)) {               // current working methods
+            if (document.documentElement.requestFullScreen) {
+                document.documentElement.requestFullScreen();
+            } else if (document.documentElement.mozRequestFullScreen) {
+                document.documentElement.mozRequestFullScreen();
+            } else if (document.documentElement.webkitRequestFullScreen) {
+                document.documentElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
+            }
+            this.render(true);
+        } else {
+            if (document.cancelFullScreen) {
+                document.cancelFullScreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitCancelFullScreen) {
+                document.webkitCancelFullScreen();
+            }
+            this.render();
+        }
+    }
+
+    render(fullBool){
+        if (! fullBool) {
+            this.el.innerHTML = '<i class="material-icons">fullscreen</i>';
+        } else {
+            this.el.innerHTML = '<i class="material-icons">fullscreen_exit</i>';
+        }
+    }
+} 
+
 let app = new App();
+
