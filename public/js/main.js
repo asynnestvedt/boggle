@@ -3,7 +3,7 @@
 class App {
     constructor() {
         this.data = {
-            board: new BoggleBoard(),
+            board: new BoggleBoard('board'),
             settings: new Settings(function() {
                 this.data.board.show(); 
                 this.shake();
@@ -33,6 +33,13 @@ class App {
 
     shake() {
         let dimen = this.data.settings.dimensions;
+        if (dimen === '4x4') {
+            this.data.board.el.classList.remove('five-by-five');
+            this.data.board.el.classList.add('four-by-four');
+        } else {
+            this.data.board.el.classList.remove('four-by-four');
+            this.data.board.el.classList.add('five-by-five');
+        }
         let test = new ApiGet('/api/board/'+this.data.settings.dimensions,function(response) {
             if (response) {
                 this.data.board.render(response.data);
@@ -108,7 +115,7 @@ class Settings {
     init() {
         for(let key in this.els.inputs) {
             if (this.els.inputs.hasOwnProperty(key)) {
-                this.els.inputs[key].addEventListener("change", this.defaultHandler);
+                this.els.inputs[key].addEventListener("change", this.defaultHandler.bind(this));
             }
         }
 
@@ -121,8 +128,8 @@ class Settings {
 }
 
 class BoggleBoard {
-    constructor(width, height) {
-        this.el = document.getElementById('board');
+    constructor(el, width, height) {
+        this.el = document.getElementById(el);
         this.width = width || 4;
         this.height = height || 4;
     }
@@ -142,7 +149,11 @@ class BoggleBoard {
             let span = document.createElement('span');
 
             span.innerText = dice[i].selected;
-            span.setAttribute('class','letters r'+dice[i].orientation);
+            if (dice[i].selected === 'M' || dice[i].selected === 'W') {
+                span.setAttribute('class','underline letters r'+dice[i].orientation);
+            } else {
+                span.setAttribute('class','letters r'+dice[i].orientation);
+            }
 
             div.setAttribute('class','die');
             div.appendChild(span);

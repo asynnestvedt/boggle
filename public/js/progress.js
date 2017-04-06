@@ -24,6 +24,9 @@ class Timer {
         this.renderTimer = null;
 
         if (interval) {
+            for(let i=0; i<this.bars.length; ++i) {
+                this.bars[i].show();
+            }
             this.renderTimer = setInterval(function() {
                 this.progress += interval;
                 for(let i=0; i<this.bars.length; ++i) {
@@ -32,9 +35,14 @@ class Timer {
             }.bind(this), interval*1000);
         }
 
-        setTimeout(function(){
+        setTimeout(function() {
+            /** stop updating progress bars */
             if(this.renderTimer) {
                 clearInterval(this.renderTimer)
+            }
+            /** hide progress bars */
+            for(let i=0; i<this.bars.length; ++i) {
+                this.bars[i].hide();
             }
             if (callback) {
                 callback();
@@ -100,6 +108,14 @@ class ProgressBar {
                 this.bar.style.left = '0px';
                 break;
         }
+    }
+
+    hide() {
+        this.el.style.display = 'none';
+    }
+
+    show() {
+        this.el.style.display = 'block';
     }
 
     render(progress) {
