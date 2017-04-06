@@ -5,8 +5,7 @@ class App {
         this.data = {
             board: new BoggleBoard('board'),
             settings: new Settings(function() {
-                this.data.board.show(); 
-                this.shake();
+                this.startgame();
             }.bind(this)),
             sounds: {
                 shake: new Audio('assets/dice-shake.mp3')
@@ -31,7 +30,8 @@ class App {
         this.data.screenMgr = new ScreenManager(document.getElementById('bggl-fullscr'));
     }
 
-    shake() {
+    startgame() {
+        this.data.board.show();
         let dimen = this.data.settings.dimensions;
         if (dimen === '4x4') {
             this.data.board.el.classList.remove('five-by-five');
