@@ -20,13 +20,18 @@
         <div class="header-container">
             <header class="wrapper clearfix">
                 <h1 class="title">BOGGLE</h1>
+                <div id="bggl-ctl-tray"><div id="bggl-fullscr"></div><div id="bggl-replay"><i class="material-icons">replay</i></div></div>
             </header>
         </div>
 
         <div class="main-container">
             <div class="main wrapper clearfix">
+                <div id="pbarx" class="progress-bar"></div>
+                <div id="pbarxinv" class="progress-bar"></div>
+                <div id="pbary" class="progress-bar"></div>
+                <div id="pbaryinv" class="progress-bar"></div>
                 <div class="board-wrap">
-                    <div id="board" class="board soft-corners four-by-four"></div>
+                    <div id="board" class="board soft-corners five-by-five"></div>
                 </div>
 
                 <div id="settings">
@@ -64,7 +69,7 @@
                             <input type="radio" id="settings12" name="settings-duration" value="600" data-action="duration" />
                             <label for="settings12">10 min</label>
                         </div>
-                        <button>Start <i class="material-icons md-24">play_arrow</i></button>
+                        <button>Start <i class="material-icons">play_arrow</i></button>
                     </form>
                 </div>
             </div> <!-- #main -->
@@ -76,6 +81,7 @@
             </footer>
         </div>
 
+        <script src="js/progress.js"></script>
         <script src="js/main.js"></script>
     </body>
 </html>
