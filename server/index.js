@@ -19,7 +19,7 @@ app.get("/api/board/:dimen?", function(req, res, next){
         dimensions = req.params.dimen.split("x");
     } catch(e) { /** no dimensions requested */ }
     let board = new boggle.Board(dimensions[0],dimensions[1]);
-    res.send( 200, JSON.stringify({data: board.dice}) );
+    res.status(200).send( JSON.stringify({data: board.dice}) );
 });
 
 /**
@@ -33,7 +33,7 @@ app.get("/api/board/:dimen?", function(req, res, next){
  */
 app.post("/api/solve", function(req, res, next){
     let data = req.body;
-    res.send( 200, JSON.stringify({data:{words:words}}) );
+    res.status(200).send( JSON.stringify({data:{words:words}}) );
 });
 
 app.get('/*', function(req, res){

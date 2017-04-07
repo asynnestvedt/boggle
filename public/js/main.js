@@ -40,10 +40,11 @@ class App {
             this.data.board.el.classList.remove('four-by-four');
             this.data.board.el.classList.add('five-by-five');
         }
-        let test = new ApiGet('/api/board/'+this.data.settings.dimensions,function(response) {
+        new ApiGet('/api/board/'+this.data.settings.dimensions,function(response) {
             if (response) {
                 this.data.board.render(response.data);
                 this.data.sounds.shake.play();
+                this.reqSolution();
                 this.data.timer.start(this.data.settings.duration,0.1, function(){
                     console.log('game over');
                 });
@@ -52,7 +53,15 @@ class App {
     }
 
     reqSolution() {
-        /** hit server to get solution of word list and correspoding cube order */
+        let diceStr = this.data.board.dice.map(function(die){
+            return die.selected;
+        }).join('');
+        new ApiPost('/api/solve',{letters: diceStr},function(response) {
+            if (response) {
+                console.log(response);
+                this.data.solution = response.data;
+            }
+        }.bind(this));
     }
 
     gameover() {
