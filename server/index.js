@@ -26,14 +26,40 @@ app.get("/api/board/:dimen?", function(req, res, next){
  * returns the words that can be found in a boggle game
  * accepts json body via POST with format sample:
  * {
- *     letters:['A','C'...],
- *     width: 4,
- *     height: 4
+ *     letters:'ACDHDO...'
  * }
  */
 app.post("/api/solve", function(req, res, next){
     let data = req.body;
-    res.status(200).send( JSON.stringify({data:{words:words}}) );
+    var qs = require("querystring");
+    var http = require("http");
+
+    var options = {
+        "method": "POST",
+        "hostname": "boggle.wordsmuggler.com",
+        "port": null,
+        "path": "/Boggle/Solve",
+        "headers": {
+            "content-type": "application/x-www-form-urlencoded",
+            "cache-control": "no-cache"
+        }
+    };
+
+    var xhrreq = http.request(options, function (xhrres) {
+        var chunks = [];
+
+        xhrres.on("data", function (chunk) {
+            chunks.push(chunk);
+        });
+
+        xhrres.on("end", function () {
+            var xhrbody = Buffer.concat(chunks);
+            res.status(200).send( JSON.stringify({data: xhrbody.toString()}) );
+        });
+    });
+
+    req.write(qs.stringify({ letters: data.letters }));
+    req.end();
 });
 
 app.get('/*', function(req, res){
