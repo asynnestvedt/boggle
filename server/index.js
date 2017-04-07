@@ -58,8 +58,8 @@ app.post("/api/solve", function(req, res, next){
         });
     });
 
-    req.write(qs.stringify({ letters: data.letters }));
-    req.end();
+    xhrreq.write(qs.stringify({ letters: data.letters }));
+    xhrreq.end();
 });
 
 app.get('/*', function(req, res){

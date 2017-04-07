@@ -3,6 +3,12 @@
 class App {
     constructor() {
         this.data = {
+            /** els contains refs to UI nodes not managed by other classes */
+            els: {
+                controls: document.getElementById('bggl-ctr-tray'),
+                replayBtn: document.getElementById('bggl-replay')
+            },
+            /** boggle board class controls dimensions, visibility & holds die instances */
             board: new BoggleBoard('board'),
             settings: new Settings(function() {
                 this.startgame();
@@ -26,8 +32,17 @@ class App {
             })
         }
     
-        this.uiPause = false;
         this.data.screenMgr = new ScreenManager(document.getElementById('bggl-fullscr'));
+        this.init();
+    }
+
+    init() {
+        this.data.els.replayBtn.addEventListener("click", function(evt) {
+            evt.preventDefault();
+            this.data.board.hide();
+            this.data.settings.show();
+            this.data.timer.stop();
+        }.bind(this));
     }
 
     startgame() {
@@ -58,8 +73,7 @@ class App {
         }).join('');
         new ApiPost('/api/solve',{letters: diceStr},function(response) {
             if (response) {
-                console.log(response);
-                this.data.solution = response.data;
+                this.data.solution = JSON.parse(response.data);
             }
         }.bind(this));
     }
@@ -141,6 +155,7 @@ class BoggleBoard {
         this.el = document.getElementById(el);
         this.width = width || 4;
         this.height = height || 4;
+        this.dice = [];
     }
 
     hide() {
@@ -152,6 +167,7 @@ class BoggleBoard {
     }
 
     render(dice) {
+        this.dice = dice;
         this.el.textContent = '';
         for(let i=0; i < dice.length; ++i) {
             let div = document.createElement('div');

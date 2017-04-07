@@ -10,7 +10,6 @@ class Timer {
 
         this.renderTimer = null;
         this.progress = 0;
-        this.renderFactor = 1;
     }
     /**
      * 
@@ -36,18 +35,24 @@ class Timer {
         }
 
         setTimeout(function() {
-            /** stop updating progress bars */
-            if(this.renderTimer) {
-                clearInterval(this.renderTimer)
-            }
-            /** hide progress bars */
-            for(let i=0; i<this.bars.length; ++i) {
-                this.bars[i].hide();
-            }
+            this.stop();
             if (callback) {
                 callback();
             }
         }.bind(this), duration*1000);
+    }
+
+    stop() {
+        /** stop updating progress bars */
+        if(this.renderTimer) {
+            clearInterval(this.renderTimer)
+        }
+        /** hide progress bars */
+        for(let i=0; i<this.bars.length; ++i) {
+            this.bars[i].hide();
+        }
+        /** reset progress */
+        this.progress = 0;
     }
 }
 
