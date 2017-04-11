@@ -443,13 +443,17 @@ footer h3 {
 
 
 #settings form {
-    width: 50%;
+    width: 90%;
     max-width: 400px;
     padding: 10px;
+    font-size: 4vw;
 }
 #settings button {
-    margin: 30px auto;
-    padding: 10px;
+    display:inline-block;
+    margin: 30px 0;
+    padding: 3vw 0;
+    font-size: 4vw;
+
 }
 
 #settings button i.material-icons {
@@ -457,11 +461,10 @@ footer h3 {
 }
 #settings form label {
     display: block;
+    padding: 4vw 0;
+    width:50%;
 }
-#settings form input {
-    width: 100%;
-    padding: 5px;
-}
+
 
 /**
  * Solution pane
