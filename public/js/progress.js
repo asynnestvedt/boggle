@@ -2,6 +2,10 @@
  * timer class acts as a timer and can update progress bars.
  */
 class Timer {
+    /**
+     * Accepts optional object with elements and orienations having format e.g.{bars:[], orientations: []}
+     * @param {object} data - (optional) includes elements and oritnations with format e.g.{bars:[], orientations: []}
+     */
     constructor(data) {
         this.bars=[];
         for (let i=0; i<data.bars.length; ++i) {
@@ -10,36 +14,63 @@ class Timer {
 
         this.renderTimer = null;
         this.progress = 0;
+        this.doat=[]; /** callbacks to be executed at a specific time */
     }
+
     /**
-     * 
-     * @param {number} duration - duration in seconds
-     * @param {number} interval - how frequently to update progress in seconds
-     * @param {callback} callback - called when complete
+     * start the timer
+     * @param {object} e.g. 
+     *      {number} duration - duration in seconds
+     *      {number} interval - how frequently to update progress in seconds
+     *      {callback} done - called when complete}
      */
-    start(duration, interval, callback) {
-        interval = interval || 0.5;
+    start(options) {
+        options = options || {};
+        let interval = options.interval || 0.5;
 
         this.renderTimer = null;
 
-        if (interval) {
-            for(let i=0; i<this.bars.length; ++i) {
-                this.bars[i].show();
-            }
-            this.renderTimer = setInterval(function() {
-                this.progress += interval;
-                for(let i=0; i<this.bars.length; ++i) {
-                    this.bars[i].render(100 - this.progress / duration * 100);
-                }
-            }.bind(this), interval*1000);
+        /** show progress bars if any */
+        for(let i=0; i<this.bars.length; ++i) {
+            this.bars[i].show();
         }
 
+        this.renderTimer = setInterval(function() {
+            this.progress += interval;
+            if (this.doat.length > 0) {
+                this.at();
+            }
+            /** update progress bars if any */
+            for(let i=0; i<this.bars.length; ++i) {
+                this.bars[i].render(100 - this.progress / options.duration * 100);
+            }
+        }.bind(this), interval*1000);
+    
         setTimeout(function() {
             this.stop();
-            if (callback) {
-                callback();
+            if (options.done) {
+                options.done();
             }
-        }.bind(this), duration*1000);
+        }.bind(this), options.duration*1000);
+    }
+
+    /**
+     * execute a callback at/near a specified time in countdown
+     * @param {number} (optional) seconds
+     * @param {callback} (optional) callback 
+     */
+    at(seconds, callback) {
+        if (seconds && callback)
+            this.doat.push({at: seconds, do: callback});
+        else {
+            for(let i = this.doat.length; i > 0; --i) {
+                let doAt = this.doat[i-1];
+                if (this.progress >= doAt.at) {
+                    doAt.do();
+                    this.doat.pop(); /** discard after executing */
+                }
+            }
+        }
     }
 
     stop() {
@@ -56,7 +87,19 @@ class Timer {
     }
 }
 
+/**
+ * Create vertical or horizontal progress bars
+ * to style the bar use selector .progress-inner
+ */
 class ProgressBar {
+    /**
+     * 
+     * @param {object} el - block element to hold progress bar
+     * @param {string} orient - see ProgressBar.orient for "enum" values
+     * @param {number} min
+     * @param {number} max 
+     * @param {number} progress - a number in between min and max
+     */
     constructor(el, orient, min, max, progress) {
         this.el = el;
         this.orientation = orient || ProgressBar.orient.X;

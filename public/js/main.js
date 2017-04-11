@@ -1,21 +1,40 @@
 'use strict'
-
+/**
+ * App class organizes and controls components and data and high level UI state.
+ */
 class App {
     constructor() {
         this.data = {
-            /** els contains refs to UI nodes not managed by other classes */
+            /**
+             * els contains refs to UI nodes not managed by other classes 
+             */
             els: {
                 controls: document.getElementById('bggl-ctr-tray'),
-                replayBtn: document.getElementById('bggl-replay')
+                replayBtn: document.getElementById('bggl-replay'),
+                solution: document.getElementById('bggl-solution'),
+                header: document.querySelector('.header-container'),
+                footer: document.querySelector('.footer-container'),
             },
-            /** boggle board class controls dimensions, visibility & holds die instances */
-            board: new BoggleBoard('board'),
+            /**
+             * boggle board initialized during game start
+             */
+            board: null,
+            /**
+             * SETTINGS
+             */
             settings: new Settings(function() {
                 this.startgame();
             }.bind(this)),
+            /**
+             * GAME SOUNDS
+             */
             sounds: {
-                shake: new Audio('assets/dice-shake.mp3')
+                shake: new Audio('assets/dice-shake.mp3'),
+                countdown: new Audio('assets/jeopardy-countdown.mp3')
             },
+            /**
+             * SETTINGS
+             */
             timer: new Timer({
                 bars: [
                     document.getElementById('pbarx'),
@@ -31,42 +50,77 @@ class App {
                 ]
             })
         }
-    
-        this.data.screenMgr = new ScreenManager(document.getElementById('bggl-fullscr'));
+
+        /**
+         * Set bindings
+         */
+        this.data.screenMgr = new ScreenManager(document.getElementById('bggl-fullscr'), {
+            onfull: function(){
+                this.data.els.footer.style.display = 'none';
+            }.bind(this),
+            onnormal: function() {
+                this.data.els.footer.style.display = 'block';
+            }
+        });
+
+        /**
+         * Set bindings
+         */
         this.init();
     }
 
     init() {
         this.data.els.replayBtn.addEventListener("click", function(evt) {
             evt.preventDefault();
-            this.data.board.hide();
+            if (this.data.board) {
+                this.data.board.hide();
+            }
+            this.data.els.solution.style.display = 'none';
             this.data.settings.show();
             this.data.timer.stop();
         }.bind(this));
     }
 
+    /**
+     * requests solution from server
+     */
     startgame() {
+        /** create new board - assume square */
+        let dimen = parseInt(this.data.settings.dimensions.split('x')[0]);
+        this.data.board = new BoggleBoard('board',dimen,dimen);
         this.data.board.show();
-        let dimen = this.data.settings.dimensions;
-        if (dimen === '4x4') {
-            this.data.board.el.classList.remove('five-by-five');
-            this.data.board.el.classList.add('four-by-four');
-        } else {
-            this.data.board.el.classList.remove('four-by-four');
-            this.data.board.el.classList.add('five-by-five');
-        }
+
+        /**  */
+        this.data.els.solution.innerHTML = '';
+
+        /** ask server for dice */
         new ApiGet('/api/board/'+this.data.settings.dimensions,function(response) {
             if (response) {
+                /** render board with dice */
                 this.data.board.render(response.data);
+                /** play dice shake sound */
                 this.data.sounds.shake.play();
+                /** fire request for solution to server */
                 this.reqSolution();
-                this.data.timer.start(this.data.settings.duration,0.1, function(){
-                    console.log('game over');
+                /** start the timer */
+                this.data.timer.start({
+                    duration: this.data.settings.duration,
+                    interval: 0.1,
+                    done: function(){
+                        this.gameover();
+                    }.bind(this)
                 });
+                /** add midway timer for countdown music */
+                this.data.timer.at(this.data.settings.duration - 31, function() {
+                    this.data.sounds.countdown.play();
+                }.bind(this));
             }
         }.bind(this));
     }
 
+    /**
+     * requests solution from server
+     */
     reqSolution() {
         let diceStr = this.data.board.dice.map(function(die){
             return die.selected;
@@ -74,12 +128,27 @@ class App {
         new ApiPost('/api/solve',{letters: diceStr},function(response) {
             if (response) {
                 this.data.solution = JSON.parse(response.data);
+                console.log(this.data.solution);
             }
         }.bind(this));
     }
 
+    /**
+     * called after timer runs down
+     */
     gameover() {
-        /** display EOGame word list */
+        /** sort solution words */
+        let sortedWords = this.data.solution.Words.sort(function(a,b) {return (a.Word < b.Word) ? -1 : (a.Word > b.Word) ? 1 : 0;});
+        
+        /** display EOGame word list. yuck!... change to templating or element.create  */
+        let htmlStr='';
+        for (let i=0; i < this.data.solution.Words.length; ++i) {
+            let word = this.data.solution.Words[i];
+            htmlStr += '<div><b>' + word.Word +'</b> &nbsp;'+word.Definition+'</div>';
+        }
+        this.data.els.solution.innerHTML = htmlStr;
+        this.data.board.hide();
+        this.data.els.solution.style.display = 'block';
     }
 
 }
@@ -103,7 +172,7 @@ class Settings {
     }
 
     defaultHandler(evt) {
-        let action='',value='';
+        let action='', value='';
         try {
             action = evt.srcElement.getAttribute('data-action');
             value = evt.srcElement.value;
@@ -169,6 +238,15 @@ class BoggleBoard {
     render(dice) {
         this.dice = dice;
         this.el.textContent = '';
+
+        if (this.width === 4 && this.height === 4) {
+            this.el.classList.remove('five-by-five');
+            this.el.classList.add('four-by-four');
+        } else {
+            this.el.classList.remove('four-by-four');
+            this.el.classList.add('five-by-five');
+        }
+
         for(let i=0; i < dice.length; ++i) {
             let div = document.createElement('div');
             let span = document.createElement('span');
@@ -253,12 +331,18 @@ class ApiPost extends ApiRequest{
 }
 
 class ScreenManager {
-    constructor(el, doToggle) {
+    constructor(el, options) {
         if (!el) return false;
 
+        options = options || {};
+
         this.el = el;
+        this.cbs = {
+            onfull: options.onfull || function(){},
+            onnormal: options.onnormal || function(){}
+        }
         this.init();
-        if (doToggle) {
+        if (options.doToggle) {
             this.toggleFullScreen();
         }
     }
@@ -278,15 +362,9 @@ class ScreenManager {
     bindEsc() {
         document.addEventListener("keydown", function(e) {
             if (e.keyCode == 27) {
-                if (document.cancelFullScreen) {
-                    document.cancelFullScreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitCancelFullScreen) {
-                    document.webkitCancelFullScreen();
-                }
+                this.exitFS();
             }
-        }, false);
+        }.bind(this), false);
     }
 
     toggleFullScreen() {
@@ -300,15 +378,21 @@ class ScreenManager {
                 document.documentElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
             }
             this.render(true);
+            this.cbs.onfull();
         } else {
-            if (document.cancelFullScreen) {
-                document.cancelFullScreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            } else if (document.webkitCancelFullScreen) {
-                document.webkitCancelFullScreen();
-            }
+            this.exitFS();
             this.render();
+            this.cbs.onnormal();
+        }
+    }
+
+    exitFS() {
+        if (document.cancelFullScreen) {
+            document.cancelFullScreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.webkitCancelFullScreen) {
+            document.webkitCancelFullScreen();
         }
     }
 

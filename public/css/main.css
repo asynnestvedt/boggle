@@ -463,9 +463,23 @@ footer h3 {
     padding: 5px;
 }
 
-
-
-
+/**
+ * Solution pane
+ */
+ #bggl-solution {
+     display: none;
+     color: #222;
+     background-color: #e4e4e4;
+     padding: 1vw 4vw;
+     text-align: left;
+     font-family: 'Times New Roman', Times, serif;
+     max-height: 80vh;
+     overflow-y: scroll;
+     font-size: 120%;
+ }
+#bggl-solution > div{
+     padding: 1vw 4vw;
+ }
 
 /* ==========================================================================
    Media Queries
