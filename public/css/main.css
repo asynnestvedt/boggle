@@ -216,13 +216,11 @@ footer h3 {
 }
 
 #bggl-ctl-tray > div {
-    display: inline-block;
     float: right;
     margin: 5px 5px 5px 0;
     font-weight: bold;
     font-size: 18px;
     background-color: #444;
-    /*border: 1px solid #A5DC86;*/
     border-radius: 8px;
     vertical-align: middle;
  }
@@ -275,14 +273,17 @@ footer h3 {
 .r90 {
     text-shadow: -2px 1px 1px darkgray;
     -webkit-transform: rotate(-90deg);
+    transform: rotate(-90deg);
 }
 .r180 {
     text-shadow: -1px -2px 1px darkgray;
     -webkit-transform: rotate(-180deg);
+    transform: rotate(-180deg);
 }
 .r270 {
     text-shadow: 2px -1px 1px darkgray;
     -webkit-transform: rotate(-270deg);
+    transform: rotate(-270deg);
 }
 /**
  * 4x4
