@@ -19,6 +19,13 @@ app.get("/api/board/:dimen?", function(req, res, next){
         dimensions = req.params.dimen.split("x");
     } catch(e) { /** no dimensions requested */ }
     let board = new boggle.Board(dimensions[0],dimensions[1]);
+
+    if(req.query.orientation && req.query.orientation === 'natural') {
+        board.dice.forEach(element => {
+            element.orientation = 0;
+        });
+    }
+
     res.status(200).send( JSON.stringify({data: board.dice}) );
 });
 

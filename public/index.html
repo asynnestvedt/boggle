@@ -18,15 +18,23 @@
     <body>
 
         <div class="header-container">
-            <header class="wrapper clearfix">
-                <h1 class="title">BOGGLE</h1>
-                <h3>available at <a href="https://github.com/asynnestvedt">Github</a></h3>
-                <div id="bggl-ctl-tray"><div id="bggl-fullscr"></div><div id="bggl-replay"><i class="material-icons">replay</i></div></div>
+            <header class="wrapper">
+                <h1 class="title">BOGGLE <a target="_blank" href="https://github.com/asynnestvedt">&#x2197;</a></h3></h1>
+                
+                <div id="bggl-ctl-tray">
+                    <div id="bggl-people">
+                        <i class="material-icons">people</i>
+                    </div>
+                    <div id="bggl-fullscr"></div>
+                    <div id="bggl-replay">
+                        <i class="material-icons">replay</i>
+                    </div>
+                </div>
             </header>
         </div>
 
         <div class="main-container">
-            <div class="main wrapper clearfix">
+            <div class="main wrapper" >
                 <div class="board-wrap">
                     <div id="pbarx" class="progress-bar"></div>
                     <div id="pbarxinv" class="progress-bar"></div>
@@ -38,21 +46,6 @@
 
                 <div id="settings">
                     <form>
-                        <!--<div class="switch-field">
-                            <h4>How Many Players?</h4>
-                            <input type="radio" id="settings1" name="settings-players" value="2" data-action="players" checked/>
-                            <label for="settings1">2</label>
-                            <input type="radio" id="settings2" name="settings-players" value="3" data-action="players" />
-                            <label for="settings2">3</label>
-                            <input type="radio" id="settings3" name="settings-players" value="4" data-action="players" />
-                            <label for="settings3">4</label>
-                            <input type="radio" id="settings4" name="settings-players" value="5" data-action="players" />
-                            <label for="settings4">5</label>
-                            <input type="radio" id="settings5" name="settings-players" value="6" data-action="players" />
-                            <label for="settings5">6</label>
-                            <input type="radio" id="settings6" name="settings-players" value="7" data-action="players" />
-                            <label for="settings6">7</label>
-                        </div>-->
                         <div class="switch-field">
                             <h4>Board Size</h4>
                             <input type="radio" id="settings7" name="settings-boardsize" value="4x4" data-action="boardsize" />
@@ -64,12 +57,23 @@
                             <h4>Duration</h4>
                             <input type="radio" id="settings9" name="settings-duration" value="60" data-action="duration" />
                             <label for="settings9">1 min</label>
-                            <input type="radio" id="settings10" name="settings-duration" value="180" data-action="duration" checked/>
-                            <label for="settings10">3 min</label>
-                            <input type="radio" id="settings11" name="settings-duration" value="300" data-action="duration" />
-                            <label for="settings11">5 min</label>
-                            <input type="radio" id="settings12" name="settings-duration" value="600" data-action="duration" />
-                            <label for="settings12">10 min</label>
+                            <input type="radio" id="settings10" name="settings-duration" value="120" data-action="duration" />
+                            <label for="settings10">2 min</label>
+                            <input type="radio" id="settings11" name="settings-duration" value="180" data-action="duration" checked/>
+                            <label for="settings11">3 min</label>
+                            <input type="radio" id="settings12" name="settings-duration" value="240" data-action="duration" />
+                            <label for="settings12">4 min</label>
+                            <input type="radio" id="settings13" name="settings-duration" value="300" data-action="duration" />
+                            <label for="settings13">5 min</label>
+                            <input type="radio" id="settings14" name="settings-duration" value="600" data-action="duration" />
+                            <label for="settings14">10 min</label>
+                        </div>
+                        <div class="switch-field">
+                            <h4>Dice Orientation</h4>
+                            <input type="radio" id="settings15" name="settings-orientation" value="random" data-action="orientation" checked />
+                            <label for="settings15">random</label>
+                            <input type="radio" id="settings16" name="settings-orientation" value="natural" data-action="orientation" />
+                            <label for="settings16">natural</label>
                         </div>
                         <button>Start <i class="material-icons">play_arrow</i></button>
                     </form>

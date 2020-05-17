@@ -94,7 +94,7 @@ class App {
         this.data.els.solution.innerHTML = '';
 
         /** ask server for dice */
-        new ApiGet('/api/board/'+this.data.settings.dimensions,function(response) {
+        new ApiGet(`/api/board/${this.data.settings.dimensions}?orientation=${this.data.settings.orientation}`, function(response) {
             if (response) {
                 /** render board with dice */
                 this.data.board.render(response.data);
@@ -165,6 +165,7 @@ class Settings {
         this.players = 2;
         this.dimensions = '5x5';
         this.duration = 180;
+        this.orientation = "random"
         this.callback = callback || this.defaultHandler;
         
         /** bind events */ 
@@ -190,6 +191,8 @@ class Settings {
             case 'duration':
                 this.duration = parseInt(value);
                 break;
+            case 'orientation':
+                this.orientation = value;
         }
 
         console.log(evt);
