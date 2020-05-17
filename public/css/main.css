@@ -171,6 +171,9 @@ body {
 
 .main-container {
     height: 100%;
+    max-height: 80vmin;
+    max-width: 100vmin;
+    margin: auto;
 }
 .title {
     color: #444;
@@ -295,24 +298,24 @@ footer h3 {
     float:left;
 }
 .four-by-four .letters {
-    font-size: 10vw;
-    line-height: 10vw;
+    font-size: 10vmin;
+    line-height: 10vmin;
 }
 .four-by-four .r0 {
-    left:0vw;
-    top:4vw;
+    left:0vmin;
+    top:4vmin;
 }
 .four-by-four .r90 {
-    left:4vw;
-    top:0vw;
+    left:4vmin;
+    top:0vmin;
 }
 .four-by-four .r180 {
-    left:0vw;
-    top:-4vw;
+    left:0vmin;
+    top:-4vmin;
 }
 .four-by-four .r270 {
-    left:-4vw;
-    top:0vw;
+    left:-4vmin;
+    top:0vmin;
 }
 /**
  * 5x5
@@ -324,24 +327,24 @@ footer h3 {
     float:left;
 }
 .five-by-five .letters {
-    font-size: 10vw;
-    line-height: 10vw;
+    font-size: 10vmin;
+    line-height: 10vmin;
 }
 .five-by-five .r0 {
-    left:0vw;
-    top:2vw;
+    left:0vmin;
+    top:2vmin;
 }
 .five-by-five .r90 {
-    left:2vw;
-    top:0vw;
+    left:2vmin;
+    top:0vmin;
 }
 .five-by-five .r180 {
-    left:0vw;
-    top:-2vw;
+    left:0vmin;
+    top:-2vmin;
 }
 .five-by-five .r270 {
-    left:-2vw;
-    top:0vw;
+    left:-2vmin;
+    top:0vmin;
 }
 
 /**
@@ -447,13 +450,13 @@ footer h3 {
     width: 90%;
     max-width: 400px;
     padding: 10px;
-    font-size: 4vw;
+    font-size: 4vmin;
 }
 #settings button {
     display:inline-block;
     margin: 30px 0;
-    padding: 3vw 0;
-    font-size: 4vw;
+    padding: 3vmin 0;
+    font-size: 4vmin;
 
 }
 
@@ -462,7 +465,7 @@ footer h3 {
 }
 #settings form label {
     display: block;
-    padding: 4vw 0;
+    padding: 4vmin 0;
     width:50%;
 }
 
@@ -474,7 +477,7 @@ footer h3 {
      display: none;
      color: #222;
      background-color: #e4e4e4;
-     padding: 1vw 4vw;
+     padding: 1vmin 4vmin;
      text-align: left;
      font-family: 'Times New Roman', Times, serif;
      max-height: 80vh;
@@ -482,7 +485,7 @@ footer h3 {
      font-size: 120%;
  }
 #bggl-solution > div{
-     padding: 1vw 4vw;
+     padding: 1vmin 4vmin;
  }
 
 /* ==========================================================================
