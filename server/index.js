@@ -1,9 +1,21 @@
 'use strict'
 let conf = require('./config/config');
+let WebSocketServer = require("ws").Server;
 let express = require('express');
+let http = require("http");
 let app = express();
 let bodyParser = require('body-parser');
 let boggle = require(conf.paths.lib + 'boggle');
+let server = http.createServer(app);
+let url = require('url')
+
+let data = {
+    webSockets: {},
+    rooms: {},
+    usernum: 0,
+}
+
+
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -18,7 +30,9 @@ app.get("/api/board/:dimen?", function(req, res, next){
     try {
         dimensions = req.params.dimen.split("x");
     } catch(e) { /** no dimensions requested */ }
-    let board = new boggle.Board(dimensions[0],dimensions[1]);
+    const board = new boggle.Board(dimensions[0],dimensions[1]);
+
+    const room = req.query.room || null;
 
     if(req.query.orientation && req.query.orientation === 'natural') {
         board.dice.forEach(element => {
@@ -27,6 +41,10 @@ app.get("/api/board/:dimen?", function(req, res, next){
     }
 
     res.status(200).send( JSON.stringify({data: board.dice}) );
+    
+    if (data.rooms && data.rooms[room]) {
+        data.rooms[room].forEach(ws => ws.send(`START|${JSON.stringify({data: board.dice})}`));
+    }
 });
 
 /**
@@ -38,10 +56,10 @@ app.get("/api/board/:dimen?", function(req, res, next){
  */
 app.post("/api/solve", function(req, res, next){
     let data = req.body;
-    var qs = require("querystring");
-    var http = require("http");
+    let qs = require("querystring");
+    let http = require("http");
 
-    var options = {
+    let options = {
         "method": "POST",
         "hostname": "boggle.wordsmuggler.com",
         "port": null,
@@ -52,15 +70,15 @@ app.post("/api/solve", function(req, res, next){
         }
     };
 
-    var xhrreq = http.request(options, function (xhrres) {
-        var chunks = [];
+    let xhrreq = http.request(options, function (xhrres) {
+        let chunks = [];
 
         xhrres.on("data", function (chunk) {
             chunks.push(chunk);
         });
 
         xhrres.on("end", function () {
-            var xhrbody = Buffer.concat(chunks);
+            let xhrbody = Buffer.concat(chunks);
             res.status(200).send( JSON.stringify({data: xhrbody.toString()}) );
         });
     });
@@ -77,7 +95,42 @@ app.get('*', function(req, res){
     res.send('looking for something?', 404);
 });
 
-var port = process.env.PORT || conf.http.defaultPort;
-if ( app.listen(port) ){
+let port = process.env.PORT || conf.http.defaultPort;
+
+if ( server.listen(port) ){
     console.log("Express on port " + port);
 }
+
+var wss = new WebSocketServer({server: server, path: "/api/chat"});
+
+wss.on("connection", function(ws, req) {
+    const { query: { room, usernum } } = url.parse(req.url, true);
+    const ip = req.connection.remoteAddress;
+    data.usernum++;
+    ws.usernum = data.usernum;
+    data.rooms[room] = data.rooms[room] || [];
+    data.rooms[room].push(ws);
+    data.webSockets[data.usernum] = ws;
+    console.log(`connected usernum ${data.usernum} in room ${room} from ip addr: ${ip}`);
+
+    ws.send(`USERNUM|${data.usernum}`);
+
+    data.rooms[room].forEach(ws => {
+        try {
+            ws.send(`COUNT|${data.rooms[room].length}`)
+        } catch(e) {
+            console.log(e);
+        }
+    });
+});
+
+wss.on("close", function(ws, req) {
+    webSockets[userID] = ws;
+    console.log('disconnected: ' + userID + ' in ' + Object.getOwnPropertyNames(webSockets));
+    delete webSockets[userID];
+});
+
+wss.on("message", function (ws, req) {
+
+    console.log(ws);
+});

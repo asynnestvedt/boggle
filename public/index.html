@@ -1,88 +1,104 @@
-
 <!doctype html>
 <html class="no-js" lang="">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>Boggle</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <link rel="stylesheet" href="css/normalize.min.css">
-        <link rel="stylesheet" href="css/main.css">
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,700,700italic" />
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Woggle</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <script src="js/vendor/modernizr-2.8.3.min.js"></script>
-    </head>
-    <body>
+    <link rel="stylesheet" href="css/normalize.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,700,700italic" />
 
-        <div class="header-container">
-            <header class="wrapper">
-                <h1 class="title">BOGGLE <a target="_blank" href="https://github.com/asynnestvedt">&#x2197;</a></h3></h1>
-                
-                <div id="bggl-ctl-tray">
-                    <div id="bggl-people">
-                        <i class="material-icons">people</i>
+    <script src="js/vendor/modernizr-2.8.3.min.js"></script>
+</head>
+
+<body>
+
+    <div class="header-container">
+        <header class="wrapper">
+            <h1 class="title">WOGGLE <a target="_blank" href="https://github.com/asynnestvedt">&nearr;</a></h3>
+            </h1>
+
+            <div id="bggl-ctl-tray">
+                <div id="bggl-people" style="position: relative;">
+                    <i class="material-icons">people</i>
+                    <span style="position: absolute; right: 1px; top: 1px;"></span>
+                </div>
+                <div id="bggl-fullscr"></div>
+                <div id="bggl-replay">
+                    <i class="material-icons">replay</i>
+                </div>
+            </div>
+        </header>
+    </div>
+
+    <div class="main-container">
+        <div class="main wrapper">
+            <div class="board-wrap">
+                <div id="pbarx" class="progress-bar"></div>
+                <div id="pbarxinv" class="progress-bar"></div>
+                <div id="pbary" class="progress-bar"></div>
+                <div id="pbaryinv" class="progress-bar"></div>
+
+                <div id="board" class="board soft-corners four-by-four"></div>
+            </div>
+
+            <div id="settings">
+                <form>
+                    <div class="switch-field">
+                        <h4>Board Size</h4>
+                        <input type="radio" id="settings7" name="settings-boardsize" value="4x4"
+                            data-action="boardsize" />
+                        <label for="settings7">4 by 4</label>
+                        <input type="radio" id="settings8" name="settings-boardsize" value="5x5" data-action="boardsize"
+                            checked />
+                        <label for="settings8">5 by 5</label>
                     </div>
-                    <div id="bggl-fullscr"></div>
-                    <div id="bggl-replay">
-                        <i class="material-icons">replay</i>
+                    <div class="switch-field">
+                        <h4>Duration</h4>
+                        <input type="radio" id="settings9" name="settings-duration" value="60" data-action="duration" />
+                        <label for="settings9">1 min</label>
+                        <input type="radio" id="settings10" name="settings-duration" value="120"
+                            data-action="duration" />
+                        <label for="settings10">2 min</label>
+                        <input type="radio" id="settings11" name="settings-duration" value="180" data-action="duration"
+                            checked />
+                        <label for="settings11">3 min</label>
+                        <input type="radio" id="settings12" name="settings-duration" value="240"
+                            data-action="duration" />
+                        <label for="settings12">4 min</label>
+                        <input type="radio" id="settings13" name="settings-duration" value="300"
+                            data-action="duration" />
+                        <label for="settings13">5 min</label>
+                        <input type="radio" id="settings14" name="settings-duration" value="600"
+                            data-action="duration" />
+                        <label for="settings14">10 min</label>
                     </div>
-                </div>
-            </header>
-        </div>
+                    <div class="switch-field">
+                        <h4>Dice Orientation</h4>
+                        <input type="radio" id="settings15" name="settings-orientation" value="random"
+                            data-action="orientation" checked />
+                        <label for="settings15">random</label>
+                        <input type="radio" id="settings16" name="settings-orientation" value="natural"
+                            data-action="orientation" />
+                        <label for="settings16">natural</label>
+                    </div>
+                    <button>Start <i class="material-icons">play_arrow</i></button>
+                </form>
+            </div>
+            <div id="bggl-solution"></div>
+            <div id="bggl-room-settings"></div>
+        </div> <!-- #main -->
+    </div> <!-- #main-container -->
 
-        <div class="main-container">
-            <div class="main wrapper" >
-                <div class="board-wrap">
-                    <div id="pbarx" class="progress-bar"></div>
-                    <div id="pbarxinv" class="progress-bar"></div>
-                    <div id="pbary" class="progress-bar"></div>
-                    <div id="pbaryinv" class="progress-bar"></div>
 
-                    <div id="board" class="board soft-corners four-by-four"></div>
-                </div>
 
-                <div id="settings">
-                    <form>
-                        <div class="switch-field">
-                            <h4>Board Size</h4>
-                            <input type="radio" id="settings7" name="settings-boardsize" value="4x4" data-action="boardsize" />
-                            <label for="settings7">4 by 4</label>
-                            <input type="radio" id="settings8" name="settings-boardsize" value="5x5" data-action="boardsize" checked/>
-                            <label for="settings8">5 by 5</label>
-                        </div>
-                        <div class="switch-field">
-                            <h4>Duration</h4>
-                            <input type="radio" id="settings9" name="settings-duration" value="60" data-action="duration" />
-                            <label for="settings9">1 min</label>
-                            <input type="radio" id="settings10" name="settings-duration" value="120" data-action="duration" />
-                            <label for="settings10">2 min</label>
-                            <input type="radio" id="settings11" name="settings-duration" value="180" data-action="duration" checked/>
-                            <label for="settings11">3 min</label>
-                            <input type="radio" id="settings12" name="settings-duration" value="240" data-action="duration" />
-                            <label for="settings12">4 min</label>
-                            <input type="radio" id="settings13" name="settings-duration" value="300" data-action="duration" />
-                            <label for="settings13">5 min</label>
-                            <input type="radio" id="settings14" name="settings-duration" value="600" data-action="duration" />
-                            <label for="settings14">10 min</label>
-                        </div>
-                        <div class="switch-field">
-                            <h4>Dice Orientation</h4>
-                            <input type="radio" id="settings15" name="settings-orientation" value="random" data-action="orientation" checked />
-                            <label for="settings15">random</label>
-                            <input type="radio" id="settings16" name="settings-orientation" value="natural" data-action="orientation" />
-                            <label for="settings16">natural</label>
-                        </div>
-                        <button>Start <i class="material-icons">play_arrow</i></button>
-                    </form>
-                </div>
-                <div id="bggl-solution"></div>
-            </div> <!-- #main -->
-        </div> <!-- #main-container -->
+    <script src="js/progress.js"></script>
+    <script src="js/main.js"></script>
+</body>
 
-        <script src="js/progress.js"></script>
-        <script src="js/main.js"></script>
-    </body>
 </html>
