@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,700,700italic" />
 
-    <script src="js/vendor/modernizr-2.8.3.min.js"></script>
+    <script src="js/lib/vendor/modernizr-2.8.3.min.js"></script>
 </head>
 
 <body>
@@ -46,7 +46,8 @@
 
                 <div id="board" class="board soft-corners four-by-four"></div>
             </div>
-
+            
+            <x-roomsettings></x-roomsettings>
             <div id="settings">
                 <form>
                     <div class="switch-field">
@@ -91,14 +92,24 @@
                 </form>
             </div>
             <div id="bggl-solution"></div>
-            <div id="bggl-room-settings"></div>
+
         </div> <!-- #main -->
     </div> <!-- #main-container -->
 
+    <script type="module">
+        // import { default as App } from './js/main.js'
+        // import {} from './js/components/room-settings.js'
+        // setTimeout(()=>{
+        //     const newel = document.createElement("X-RoomSettings")
+        //     document.body.appendChild(newel)
+        // },1000)
+    </script>
 
-
+    <script src="js/components/room-settings.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
     <script src="js/progress.js"></script>
-    <script src="js/main.js"></script>
+
+
 </body>
 
 </html>
