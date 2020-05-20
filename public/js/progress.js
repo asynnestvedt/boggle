@@ -7,14 +7,14 @@ class Timer {
      * @param {object} data - (optional) includes elements and oritnations with format e.g.{bars:[], orientations: []}
      */
     constructor(data) {
-        this.bars=[];
-        for (let i=0; i<data.bars.length; ++i) {
-            this.bars.push(new ProgressBar(data.bars[i], data.orientations[i]));
+        this.bars = []
+        for (let i = 0; i < data.bars.length; ++i) {
+            this.bars.push(new ProgressBar(data.bars[i], data.orientations[i]))
         }
 
-        this.renderTimer = null;
-        this.progress = 0;
-        this.doat=[]; /** callbacks to be executed at a specific time */
+        this.renderTimer = null
+        this.progress = 0
+        this.doat = [] /** callbacks to be executed at a specific time */
     }
 
     /**
@@ -25,33 +25,33 @@ class Timer {
      *      {callback} done - called when complete}
      */
     start(options) {
-        options = options || {};
-        let interval = options.interval || 0.5;
+        options = options || {}
+        let interval = options.interval || 0.5
 
-        this.renderTimer = null;
+        this.renderTimer = null
 
         /** show progress bars if any */
-        for(let i=0; i<this.bars.length; ++i) {
-            this.bars[i].show();
+        for (let i = 0; i < this.bars.length; ++i) {
+            this.bars[i].show()
         }
 
-        this.renderTimer = setInterval(function() {
-            this.progress += interval;
+        this.renderTimer = setInterval(function () {
+            this.progress += interval
             if (this.doat.length > 0) {
-                this.at();
+                this.at()
             }
             /** update progress bars if any */
-            for(let i=0; i<this.bars.length; ++i) {
-                this.bars[i].render(100 - this.progress / options.duration * 100);
+            for (let i = 0; i < this.bars.length; ++i) {
+                this.bars[i].render(100 - this.progress / options.duration * 100)
             }
-        }.bind(this), interval*1000);
-    
-        setTimeout(function() {
-            this.stop();
+        }.bind(this), interval * 1000)
+
+        setTimeout(function () {
+            this.stop()
             if (options.done) {
-                options.done();
+                options.done()
             }
-        }.bind(this), options.duration*1000);
+        }.bind(this), options.duration * 1000)
     }
 
     /**
@@ -61,13 +61,13 @@ class Timer {
      */
     at(seconds, callback) {
         if (seconds && callback)
-            this.doat.push({at: seconds, do: callback});
+            this.doat.push({ at: seconds, do: callback })
         else {
-            for(let i = this.doat.length; i > 0; --i) {
-                let doAt = this.doat[i-1];
+            for (let i = this.doat.length; i > 0; --i) {
+                let doAt = this.doat[i - 1]
                 if (this.progress >= doAt.at) {
-                    doAt.do();
-                    this.doat.pop(); /** discard after executing */
+                    doAt.do()
+                    this.doat.pop() /** discard after executing */
                 }
             }
         }
@@ -75,15 +75,15 @@ class Timer {
 
     stop() {
         /** stop updating progress bars */
-        if(this.renderTimer) {
+        if (this.renderTimer) {
             clearInterval(this.renderTimer)
         }
         /** hide progress bars */
-        for(let i=0; i<this.bars.length; ++i) {
-            this.bars[i].hide();
+        for (let i = 0; i < this.bars.length; ++i) {
+            this.bars[i].hide()
         }
         /** reset progress */
-        this.progress = 0;
+        this.progress = 0
     }
 }
 
@@ -101,93 +101,93 @@ class ProgressBar {
      * @param {number} progress - a number in between min and max
      */
     constructor(el, orient, min, max, progress) {
-        this.el = el;
-        this.orientation = orient || ProgressBar.orient.X;
-        this.min = min || 0;
-        this.max = max || 100;
+        this.el = el
+        this.orientation = orient || ProgressBar.orient.X
+        this.min = min || 0
+        this.max = max || 100
 
-        let div = document.createElement('div');
-        div.setAttribute('class','progress-inner');
-        this.el.appendChild(div);
-        this.bar = div;
+        let div = document.createElement('div')
+        div.setAttribute('class', 'progress-inner')
+        this.el.appendChild(div)
+        this.bar = div
 
-        this.init();
+        this.init()
 
-        if(progress) {
-            render(progress);
+        if (progress) {
+            render(progress)
         }
     }
 
     static get orient() {
         return {
-            X:'x', /** left to right */
-            XINV:'xinv', /** right to left */
-            Y:'y', /** bottom to top */
-            YINV:'yinv' /** top to bottom */
+            X: 'x', /** left to right */
+            XINV: 'xinv', /** right to left */
+            Y: 'y', /** bottom to top */
+            YINV: 'yinv' /** top to bottom */
         }
     }
 
     init() {
-        this.bar.style.position = 'absolute';
+        this.bar.style.position = 'absolute'
 
-        switch(this.orientation) {
+        switch (this.orientation) {
             case ProgressBar.orient.X:
-                this.bar.style.width = '0.1%';
-                this.bar.style.height = '100%';
-                this.bar.style.top = '0px';
-                this.bar.style.left = '0px';
-                break;
+                this.bar.style.width = '0.1%'
+                this.bar.style.height = '100%'
+                this.bar.style.top = '0px'
+                this.bar.style.left = '0px'
+                break
             case ProgressBar.orient.XINV:
-                this.bar.style.width = '0.1%';
-                this.bar.style.height = '100%';
-                this.bar.style.top = '0px';
-                this.bar.style.right = '0px';
-                break;
+                this.bar.style.width = '0.1%'
+                this.bar.style.height = '100%'
+                this.bar.style.top = '0px'
+                this.bar.style.right = '0px'
+                break
             case ProgressBar.orient.Y:
-                this.bar.style.width = '100%';
-                this.bar.style.height = '0.1%';
-                this.bar.style.bottom = '0px';
-                this.bar.style.left = '0px';
-                break;
+                this.bar.style.width = '100%'
+                this.bar.style.height = '0.1%'
+                this.bar.style.bottom = '0px'
+                this.bar.style.left = '0px'
+                break
             case ProgressBar.orient.YINV:
-                this.bar.style.width = '100%';
-                this.bar.style.height = '0.1%';
-                this.bar.style.top = '0px';
-                this.bar.style.left = '0px';
-                break;
+                this.bar.style.width = '100%'
+                this.bar.style.height = '0.1%'
+                this.bar.style.top = '0px'
+                this.bar.style.left = '0px'
+                break
         }
     }
 
     hide() {
-        this.el.style.display = 'none';
+        this.el.style.display = 'none'
     }
 
     show() {
-        this.el.style.display = 'block';
+        this.el.style.display = 'block'
     }
 
     render(progress) {
-        progress = progress || 0;
+        progress = progress || 0
         if (progress > this.max) {
-            progress = this.max;
+            progress = this.max
         } else if (progress < this.min) {
-            progress = this.min;
+            progress = this.min
         }
 
-        let pct = (progress / (this.max - this.min)) * 100;
+        let pct = (progress / (this.max - this.min)) * 100
 
-        switch(this.orientation) {
+        switch (this.orientation) {
             case ProgressBar.orient.X:
             case ProgressBar.orient.XINV:
-                this.bar.style.width = pct.toString() + '%';
-                break;
+                this.bar.style.width = pct.toString() + '%'
+                break
             case ProgressBar.orient.Y:
-                this.bar.style.height = pct.toString() + '%';
-                break;
+                this.bar.style.height = pct.toString() + '%'
+                break
             case ProgressBar.orient.YINV:
-                this.bar.style.height = pct.toString() + '%';
-                this.bar.style.top = '0px';
-                break;
+                this.bar.style.height = pct.toString() + '%'
+                this.bar.style.top = '0px'
+                break
         }
     }
 }
