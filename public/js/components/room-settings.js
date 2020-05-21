@@ -52,9 +52,11 @@ export default class RoomSettings extends Component {
         /** copy link on click */
         document.getElementById('bggl-copy-room').onclick = (ev) => {
             ev.preventDefault()
+            this.els.roomIdText.disabled = false
             this.els.roomIdText.select()
             this.els.roomIdText.setSelectionRange(0, 99999)
             document.execCommand('copy')
+            this.els.roomIdText.disabled = true
         }
 
         /** get preexisting user name */
