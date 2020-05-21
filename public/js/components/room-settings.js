@@ -132,7 +132,8 @@ export default class RoomSettings extends Component {
 
     joinRoom() {
         if (this.ws == null) {
-            this.ws = new WebSocket(`ws://localhost:3010/api/chat?roomid=${this.roomid}&uid=${this.userid}&name=${this.name}`)
+            const protocol = window.location.protocol === 'http:' ? 'ws' : 'wss'
+            this.ws = new WebSocket(`${protocol}://${window.location.host}/api/chat?roomid=${this.roomid}&uid=${this.userid}&name=${this.name}`)
             this.ws.onopen = this.defaultHandler.bind(this)
             this.ws.onmessage = this.wsMessage.bind(this)
             this.ws.onclose = this.wsClose.bind(this)
