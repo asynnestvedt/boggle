@@ -5,17 +5,30 @@ export default class RoomSettings extends Component {
     constructor() {
         super()
         this.onRoomChangeCallback = this.defaultHandler
+        this.roomid
+        this.userid
+        this.name
+        this.users
         this.els = {
+            overlay: this.querySelector('.overlay'),
             roomIdText: this.querySelector('#roomid'),
             username: this.querySelector('#bggl-username'),
             doneButton: this.querySelector('#bggl-room-done'),
-            closeButton: this.querySelector('div.overlay span.close')
+            closeButton: this.querySelector('div.overlay span.close'),
+            roomCounter: document.getElementById('bggl-people-count'),
+            usersList: this.querySelector('div.userslist')
         }
         this.ws = null
         this.init()
     }
 
+    renderUsers() {
+        this.els.usersList.innerHTML = RoomSettings.template_users(this.users)
+    }
+
     connectedCallback() {
+        this.setRoomID()
+        this.renderUsers()
     }
 
     disconnectedCallback() {
@@ -25,12 +38,9 @@ export default class RoomSettings extends Component {
     }
 
     init() {
-        if (window.location.search.indexOf('room=') === -1) {
-            window.location.href = window.location.href + '?room=' + Util.makeRoomID()
-        }
+        this.setUserID()
 
-        this.els.roomIdText.value = window.location.href
-
+        /** copy link on click */
         document.getElementById('bggl-copy-room').onclick = (ev) => {
             ev.preventDefault()
             this.els.roomIdText.select()
@@ -38,36 +48,53 @@ export default class RoomSettings extends Component {
             document.execCommand('copy')
         }
 
-        let userid = Util.getCookie('bggl-userid')
-        if (! userid) {
-            userid = [...Array(28)].map(() => (~~(Math.random() * 36)).toString(36)).join('')
-            Util.setCookie('bggl-userid', userid)
-        }
-       
-        const curruser = Util.getCookie('bggl-username')
-        this.els.username.value = curruser
+        /** get preexisting user name */
+        this.name = Util.getCookie('bggl-username')
+        this.els.username.value = this.name
         
-
+        
         this.els.doneButton.onclick = this.doneButtonHandler.bind(this)
         this.els.closeButton.onclick = this.hide.bind(this)
     }
 
+    setRoomID() {
+        if (window.location.search.indexOf('room=') === -1) {
+            this.roomid = Util.makeID()
+            // window.location.href = window.location.href + `?room=${this.roomid}`
+        } else {
+            this.roomid = Util.getParameterByName('room')
+        }
+
+        const url = new URL(window.location.href)
+        url.searchParams.set('room', this.roomid)
+        this.els.roomIdText.value = url.toString()
+    }
+
+    setUserID() {
+        this.userid = Util.getCookie('bggl-userid')
+        if (! this.userid) {
+            this.userid = Util.makeID()
+            Util.setCookie('bggl-userid', this.userid)
+        }
+    }
+
     doneButtonHandler(ev) {
         ev.preventDefault()
-
-        const curruser = Util.getCookie('bggl-username')
-
-        if (this.els.username.value.trim() != curruser.trim()) {
-            if (this.els.username.value.trim() === '') {
+        const name = this.els.username.value.trim();
+        if (name != this.name) {
+            if (name === '') {
                 this.leaveRoom()
                 return
             } else {
+                this.name = name
                 Util.setCookie('bggl-username', this.els.username.value)
             }
         }
-        if (this.els.username.value.trim() != '') {
+
+        if (name != '') {
             this.joinRoom()
         }
+
         this.hide()
     }
 
@@ -75,35 +102,60 @@ export default class RoomSettings extends Component {
         console.log(settings)
     }
 
-    hide() { this.style.display = 'none' }
+    hide() { this.els.overlay.style.display = 'none' }
 
     show(callback) {
-        this.style.display = 'block'
+        this.els.overlay.style.display = 'block'
         this.callback = callback || this.defaultHandler
     }
 
 
     joinRoom() {
-        if (this.data.room !== 'none') {
-            this.ws = new WebSocket(`ws://localhost:3010/api/chat?room=${this.data.room}`)
-            this.ws.onopen = () => {
-                console.log('web socket established')
-            }
-            this.ws.onmessage = this.wsMessage
-            this.ws.onclose = this.wsClose
+        if (this.ws == null) {
+            this.ws = new WebSocket(`ws://localhost:3010/api/chat?roomid=${this.roomid}&uid=${this.userid}&name=${this.name}`)
+            this.ws.onopen = () => { this.announceName() }
+            this.ws.onmessage = this.wsMessage.bind(this)
+            this.ws.onclose = this.wsClose.bind(this)
+        } else {
+            this.announceName()
         }
     }
 
-    leaveRoom() {
+    announceName() {
+        this.ws.send(
+            JSON.stringify({
+                action: 'join',
+                roomid: this.roomid,
+                userid: this.userid,
+                name: this.els.username.value.trim()
+            })
+        )
+    }
 
+
+    leaveRoom() {
+        console.log('leaving room')
+        this.ws.close()
+        this.ws = null
     }
 
     wsClose() {
-
+        console.log('socket closed')
     }
 
-    wsMessage() {
+    wsMessage(msg) {
+        const payload = JSON.parse(msg.data)
+        console.log(payload)
 
+        if (payload.type === 'rosterUpdate') {
+            this.updateRoster(payload)
+        }
+    }
+
+    updateRoster(payload) {
+        this.users = payload.users
+        this.els.roomCounter.innerText = payload.users.length
+        this.renderUsers()
     }
 
     setOnRoomChange(f) {
@@ -114,10 +166,23 @@ export default class RoomSettings extends Component {
         this.onRoomChangeCallback(roomdata)
     }
 
+    static template_users(usersArray) {
+        if (! usersArray || usersArray.length === 0) {
+            return /*html*/ `<h4>Looks like its just you in this room. invite some friends!</h4>`
+        }
+        
+        return /*html*/ `
+        <ul>
+            ${usersArray.map(e=> `<li>${e.name}</li>` ).join('')}
+        </ul>
+        `
+    }
+
     static template() {
         return /*html*/`
         <style>
             .overlay {
+                display: none; /** default view state */
                 position: absolute;
                 top: 104px;
                 left: 0;
@@ -162,7 +227,7 @@ export default class RoomSettings extends Component {
                     <h4>Share Room Link</h4>
                     <input type="text" value="" id="roomid" disabled>
                     <button id="bggl-copy-room"><i class="material-icons">filter_none</i> Copy</button>
-                    <h4>Looks like its just you in this room. invite some friends!</h4>
+                    <div class="userslist"></div>
                     <label for="bggl-username">What's your name?</label>
                     <input id="bggl-username" type="text" />
                     <button id="bggl-room-done">Done</button>

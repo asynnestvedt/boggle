@@ -10,9 +10,9 @@ let server = http.createServer(app)
 let url = require('url')
 
 let data = {
-    webSockets: {},
+    // conns: new Set(),
     rooms: {},
-    usernum: 0,
+    roomByUser: {},
 }
 
 
@@ -103,34 +103,87 @@ if (server.listen(port)) {
 
 var wss = new WebSocketServer({ server: server, path: '/api/chat' })
 
-wss.on('connection', function (ws, req) {
-    const { query: { room, usernum } } = url.parse(req.url, true)
-    const ip = req.connection.remoteAddress
-    data.usernum++
-    ws.usernum = data.usernum
+
+function createOrJoinRoom(ws, room) {
     data.rooms[room] = data.rooms[room] || []
-    data.rooms[room].push(ws)
-    data.webSockets[data.usernum] = ws
-    console.log(`connected usernum ${data.usernum} in room ${room} from ip addr: ${ip}`)
+    
+    if (! data.rooms[room].some(e => e.uid === ws.uid)) {
+        data.rooms[room].push(ws)
+        data.roomByUser[ws.uid] = data.rooms[room] /* User can only have one room! */
+        console.log(`connected user ${ws.uid} in room ${room}`)
+    }
 
-    ws.send(`USERNUM|${data.usernum}`)
+    notifyRoom(data.rooms[room],{
+        type: 'rosterUpdate',
+        text: `${ws.displayname} has joined the room.`,
+        users: data.rooms[room].map(e => { return { uid: e.uid, name: e.displayname } })
+    })
+    return data.rooms[room]
+}
 
-    data.rooms[room].forEach(ws => {
+function leaveRoom(ws) {
+    
+    data.roomByUser[ws.uid]
+
+    notifyRoom(data.rooms[room],{
+        type: 'rosterUpdate',
+        text: `${ws.displayname} has joined the room.`,
+        users: data.rooms[room].map(e => { return { uid: e.uid, name: e.displayname } })
+    })
+}
+
+function notifyRoom(room, payload) {
+    room.forEach(ws => {
         try {
-            ws.send(`COUNT|${data.rooms[room].length}`)
+            ws.send(JSON.stringify(payload))
         } catch (e) {
             console.log(e)
         }
     })
-})
+}
 
-wss.on('close', function (ws, req) {
-    webSockets[userID] = ws
-    console.log('disconnected: ' + userID + ' in ' + Object.getOwnPropertyNames(webSockets))
-    delete webSockets[userID]
-})
+wss.on('connection', function (ws, req) {
+    const { query: { roomid, uid, name } } = url.parse(req.url, true)
 
-wss.on('message', function (ws, req) {
+    // 1. attach identities
+    ws.uid = uid
+    ws.roomid = roomid
+    ws.displayname = name
 
-    console.log(ws)
-})
+    data.conns
+
+    // 2. create or join room
+    ws.room = createOrJoinRoom(ws, roomid)
+
+    ws.on('close', (exitcode) => {
+        console.log(ws)
+        delete data.roomByUser[ws.uid]
+        data.rooms[ws.roomid].splice(data.rooms[ws.roomid].findIndex(v => v.uid === ws.uid), 1)
+        notifyRoom(data.rooms[ws.room],{
+            type: 'rosterUpdate',
+            text: `${ws.displayname} has left the room.`,
+            users: data.rooms[ws.room].map(e => { return { uid: e.uid, name: e.displayname } })
+        })
+    })
+    
+    ws.on('message', function (msg) {
+        console.log(msg)
+    })
+}.bind(this))
+
+
+
+
+const Messages =  {
+    roomUpdate: (room) => {
+        data.rooms[room].forEach(ws => {
+            try {
+                ws.send({
+                    
+                })
+            } catch (e) {
+                console.log(e)
+            }
+        })
+    }
+}
