@@ -13,6 +13,7 @@ class Timer {
         }
 
         this.renderTimer = null
+        this.endTimer = null
         this.progress = 0
         this.doat = [] /** callbacks to be executed at a specific time */
     }
@@ -46,7 +47,7 @@ class Timer {
             }
         }.bind(this), interval * 1000)
 
-        setTimeout(function () {
+        this.endTimer = setTimeout(function () {
             this.stop()
             if (options.done) {
                 options.done()
@@ -78,6 +79,10 @@ class Timer {
         if (this.renderTimer) {
             clearInterval(this.renderTimer)
         }
+        if (this.endTimer) {
+            clearTimeout(this.endTimer)
+        }
+        this.doat = []
         /** hide progress bars */
         for (let i = 0; i < this.bars.length; ++i) {
             this.bars[i].hide()
@@ -114,7 +119,7 @@ class ProgressBar {
         this.init()
 
         if (progress) {
-            render(progress)
+            this.render(progress)
         }
     }
 
