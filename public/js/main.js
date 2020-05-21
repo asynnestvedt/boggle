@@ -154,6 +154,16 @@ export default class App {
                 this.gameover()
             }.bind(this)
         })
+
+        navigator.wakeLock.request('display').then(
+            function successFunction() {
+                // success
+            },
+            function errorFunction() {
+                // error
+            }
+        )
+
         /** add midway timer for countdown music */
         this.data.timer.at(this.data.settings.duration - 31, function () {
             this.data.sounds.countdown.play()
@@ -181,6 +191,8 @@ export default class App {
     gameover() {
         /** sort solution words */
         let sortedWords = this.data.solution.Words.sort(function (a, b) { return (a.Word < b.Word) ? -1 : (a.Word > b.Word) ? 1 : 0 })
+
+        navigator.wakeLock.release('display')
 
         /** display EOGame word list. yuck!... change to templating or element.create  */
         let htmlStr = ''
