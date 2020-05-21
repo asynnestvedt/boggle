@@ -188,10 +188,8 @@ body::-webkit-scrollbar {
 
 .title {
     display: inline-block;
-    padding: 10px 0;
     color: #444;
     text-shadow: 0px 1px 1px #666;
-    margin: 5px 2.5px 5px 0;
 }
 
 .title a,
