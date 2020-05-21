@@ -114,26 +114,29 @@ function createOrJoinRoom(ws, room) {
     }
 
     notifyRoom(data.rooms[room],{
-        type: 'rosterUpdate',
-        text: `${ws.displayname} has joined the room.`,
-        users: data.rooms[room].map(e => { return { uid: e.uid, name: e.displayname } })
+        action: 'rosterUpdate',
+        payload: {
+            text: `${ws.displayname} has joined the room.`,
+            users: (data.rooms[room] || []).map(e => { return { uid: e.uid, name: e.displayname } })
+        }
     })
     return data.rooms[room]
 }
 
 function leaveRoom(ws) {
-    
-    data.roomByUser[ws.uid]
-
-    notifyRoom(data.rooms[room],{
-        type: 'rosterUpdate',
-        text: `${ws.displayname} has joined the room.`,
-        users: data.rooms[room].map(e => { return { uid: e.uid, name: e.displayname } })
+    delete data.roomByUser[ws.uid]
+    data.rooms[ws.roomid].splice(data.rooms[ws.roomid].findIndex(v => v.uid === ws.uid), 1)
+    notifyRoom(data.rooms[ws.roomid],{
+        action: 'rosterUpdate',
+        payload: {
+            text: `${ws.displayname} has left the room.`,
+            users: (data.rooms[ws.roomid] || []).map(e => { return { uid: e.uid, name: e.displayname } })
+        }
     })
 }
 
 function notifyRoom(room, payload) {
-    room.forEach(ws => {
+    (room || []).forEach(ws => {
         try {
             ws.send(JSON.stringify(payload))
         } catch (e) {
@@ -157,17 +160,14 @@ wss.on('connection', function (ws, req) {
 
     ws.on('close', (exitcode) => {
         console.log(ws)
-        delete data.roomByUser[ws.uid]
-        data.rooms[ws.roomid].splice(data.rooms[ws.roomid].findIndex(v => v.uid === ws.uid), 1)
-        notifyRoom(data.rooms[ws.room],{
-            type: 'rosterUpdate',
-            text: `${ws.displayname} has left the room.`,
-            users: data.rooms[ws.room].map(e => { return { uid: e.uid, name: e.displayname } })
-        })
+        leaveRoom(ws)
     })
     
-    ws.on('message', function (msg) {
-        console.log(msg)
+    ws.on('message', function (msgStr) {
+        const msg = JSON.parse(msgStr)
+        if (msg.action === 'startgame') {
+            notifyRoom(data.rooms[ws.roomid], msg)
+        }
     })
 }.bind(this))
 

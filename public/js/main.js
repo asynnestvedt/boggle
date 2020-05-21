@@ -82,6 +82,7 @@ export default class App {
         this.data.els.replayBtn.addEventListener('click', function (evt) {
             evt.preventDefault()
             if (this.data.board) {
+                this.data.board.clear()
                 this.data.board.hide()
             }
             this.data.els.solution.style.display = 'none'
@@ -95,77 +96,62 @@ export default class App {
     }
 
 
-    wsJoin() {
-        this.ws.send(`ROOM|${this.data.room}|JOIN|${this.data.user}`)
-    }
-
-    wsMessage(evt) {
-        let received_msg = evt.data.split('|')
-        switch (received_msg[0]) {
-            case 'COUNT':
-                document.getElementById('bggl-people').querySelector('span').innerHTML = received_msg[1]
-                break
-            case 'START':
-                this.startgame(JSON.parse(received_msg[1]))
-                break
-        }
-    }
-
-    wsClose() {
-        alert('Connection is closed...')
-    }
-
 
     /**
      * requests solution from server
      */
     requestgame() {
-        /** create new board - assume square */
-        let dimen = parseInt(this.data.settings.dimensions.split('x')[0])
-        this.data.board = new BoggleBoard('board', dimen, dimen)
-        this.data.board.show()
-
-        /**  */
-        this.data.els.solution.innerHTML = ''
-
-        const room = Util.getParameterByName('room') || 'none'
-
         /** ask server for dice */
-        new ApiGet(`/api/board/${this.data.settings.dimensions}?orientation=${this.data.settings.orientation}&room=${room}`, function (response) {
+        new ApiGet(`/api/board/${this.data.settings.dimensions}?orientation=${this.data.settings.orientation}`, function (response) {
             if (response) {
-                this.startgame(response.data)
+                if(! this.data.roomSettings.sendMessage('startgame', {                    
+                    dice: response.data,
+                    duration: this.data.settings.duration,
+                    text: `${this.name} started a new multiplayer Woggle game`,
+
+                }) ) {
+                    /** single player game */
+                    this.startgame({dice: response.data, duration: this.data.settings.duration})
+                }
+                
             }
         }.bind(this))
     }
 
 
     startgame(data) {
+        this.data.settings.hide()
+        /** create new board - assume square */
+        const dimen = Math.sqrt(data.dice.length)
+        this.data.board = new BoggleBoard('board', dimen, dimen)
+        this.data.board.show()
+        /** clear solution */
+        this.data.els.solution.innerHTML = ''
         /** render board with dice */
-        this.data.board.render(data)
+        this.data.board.render(data.dice)
         /** play dice shake sound */
         this.data.sounds.shake.play()
         /** fire request for solution to server */
-        this.reqSolution()
+        // this.reqSolution()
         /** start the timer */
+        this.data.timer.stop()
         this.data.timer.start({
-            duration: this.data.settings.duration,
+            duration: data.duration,
             interval: 0.1,
             done: function () {
                 this.gameover()
             }.bind(this)
         })
 
-        navigator.wakeLock.request('display').then(
-            function successFunction() {
-                // success
-            },
-            function errorFunction() {
-                // error
-            }
-        )
+        try {
+            navigator.wakeLock.request('display')
+        } catch(e) {
+            console.log('could not disable display sleep')
+        }
+        
 
         /** add midway timer for countdown music */
-        this.data.timer.at(this.data.settings.duration - 31, function () {
+        this.data.timer.at(data.duration - 31, function () {
             this.data.sounds.countdown.play()
         }.bind(this))
     }
@@ -189,20 +175,28 @@ export default class App {
      * called after timer runs down
      */
     gameover() {
-        /** sort solution words */
-        let sortedWords = this.data.solution.Words.sort(function (a, b) { return (a.Word < b.Word) ? -1 : (a.Word > b.Word) ? 1 : 0 })
-
-        navigator.wakeLock.release('display')
-
-        /** display EOGame word list. yuck!... change to templating or element.create  */
-        let htmlStr = ''
-        for (let i = 0; i < this.data.solution.Words.length; ++i) {
-            let word = this.data.solution.Words[i]
-            htmlStr += '<div><b>' + word.Word + '</b> &nbsp;' + word.Definition + '</div>'
+        try {
+            navigator.wakeLock.release('display')
+        } catch(e) {
+            console.log('could not re-enable display sleep')
         }
-        this.data.els.solution.innerHTML = htmlStr
-        this.data.board.hide()
-        this.data.els.solution.style.display = 'block'
+
+        this.data.board.disable()
+
+        if (this.data.solution) {
+            /** sort solution words */
+            // let sortedWords = this.data.solution.Words.sort(function (a, b) { return (a.Word < b.Word) ? -1 : (a.Word > b.Word) ? 1 : 0 })
+
+            /** display EOGame word list. yuck!... change to templating or element.create  */
+            let htmlStr = ''
+            for (let i = 0; i < this.data.solution.Words.length; ++i) {
+                let word = this.data.solution.Words[i]
+                htmlStr += '<div><b>' + word.Word + '</b> &nbsp;' + word.Definition + '</div>'
+            }
+            this.data.els.solution.innerHTML = htmlStr
+            this.data.els.solution.style.display = 'block'
+        }
+        
     }
 
 }
@@ -293,6 +287,10 @@ class BoggleBoard {
         this.el.style.display = 'block'
     }
 
+    clear() {
+        this.el.innerHTML = ''
+    }
+
     render(dice) {
         this.dice = dice
         this.el.textContent = ''
@@ -322,6 +320,7 @@ class BoggleBoard {
             this.el.appendChild(div)
         }
     }
+
 }
 
 class ScreenManager {
@@ -434,5 +433,4 @@ export class Component extends HTMLElement {
 }
 
 
-let app = new App()
-
+window.app = new App()

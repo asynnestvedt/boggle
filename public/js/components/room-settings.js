@@ -4,31 +4,40 @@ import { Component } from '../main.js'
 export default class RoomSettings extends Component {
     constructor() {
         super()
-        this.onRoomChangeCallback = this.defaultHandler
+        this._startGameCallback = window.app.startgame.bind(window.app)
         this.roomid
         this.userid
-        this.name
+        this.name = 'Player'
         this.users
         this.els = {
             overlay: this.querySelector('.overlay'),
             roomIdText: this.querySelector('#roomid'),
             username: this.querySelector('#bggl-username'),
-            doneButton: this.querySelector('#bggl-room-done'),
+            doneButtons: this.querySelectorAll('button.bggl-room-done'),
             closeButton: this.querySelector('div.overlay span.close'),
             roomCounter: document.getElementById('bggl-people-count'),
-            usersList: this.querySelector('div.userslist')
+            usersList: this.querySelector('div.userslist'),
+            leaveRoom: this.querySelector('#bggl-leave-room'),
+            joinRoom: this.querySelector('#bggl-join-room')
         }
         this.ws = null
         this.init()
     }
 
-    renderUsers() {
+    renderUpdate() {
         this.els.usersList.innerHTML = RoomSettings.template_users(this.users)
+        if (this.ws) {
+            this.els.joinRoom.style.display = 'none'
+            this.els.leaveRoom.style.display = 'block'
+        } else {
+            this.els.joinRoom.style.display = 'block'
+            this.els.leaveRoom.style.display = 'none'
+        }
     }
 
     connectedCallback() {
         this.setRoomID()
-        this.renderUsers()
+        this.renderUpdate()
     }
 
     disconnectedCallback() {
@@ -53,20 +62,24 @@ export default class RoomSettings extends Component {
         this.els.username.value = this.name
         
         
-        this.els.doneButton.onclick = this.doneButtonHandler.bind(this)
+        this.els.doneButtons.forEach(b => b.onclick = this.doneButtonHandler.bind(this))
         this.els.closeButton.onclick = this.hide.bind(this)
     }
 
     setRoomID() {
-        if (window.location.search.indexOf('room=') === -1) {
-            this.roomid = Util.makeID()
-            // window.location.href = window.location.href + `?room=${this.roomid}`
-        } else {
-            this.roomid = Util.getParameterByName('room')
-        }
-
         const url = new URL(window.location.href)
-        url.searchParams.set('room', this.roomid)
+        const existingRoom = url.searchParams.get('room')
+        if (!existingRoom) {
+            this.roomid = Util.makeID()
+            url.searchParams.set('room', this.roomid)
+        } else {
+            this.roomid = existingRoom
+        }
+        
+        if (existingRoom) {
+            this.show()
+            this.joinRoom()
+        }
         this.els.roomIdText.value = url.toString()
     }
 
@@ -80,7 +93,12 @@ export default class RoomSettings extends Component {
 
     doneButtonHandler(ev) {
         ev.preventDefault()
-        const name = this.els.username.value.trim();
+        
+        if (this.ws) {
+            return this.leaveRoom()
+        }
+
+        const name = this.els.username.value.trim()
         if (name != this.name) {
             if (name === '') {
                 this.leaveRoom()
@@ -113,57 +131,58 @@ export default class RoomSettings extends Component {
     joinRoom() {
         if (this.ws == null) {
             this.ws = new WebSocket(`ws://localhost:3010/api/chat?roomid=${this.roomid}&uid=${this.userid}&name=${this.name}`)
-            this.ws.onopen = () => { this.announceName() }
+            this.ws.onopen = this.defaultHandler.bind(this)
             this.ws.onmessage = this.wsMessage.bind(this)
             this.ws.onclose = this.wsClose.bind(this)
         } else {
-            this.announceName()
+            this.sendMessage('join', { name: this.els.username.value.trim() } )
         }
     }
 
-    announceName() {
-        this.ws.send(
-            JSON.stringify({
-                action: 'join',
-                roomid: this.roomid,
-                userid: this.userid,
-                name: this.els.username.value.trim()
-            })
-        )
+
+    sendMessage(action, payload) {
+        if (this.ws) {
+            this.ws.send( JSON.stringify( Object.assign ({action: action}, { payload: payload }) ) )
+            return true
+        }
+
+        return false
     }
 
 
     leaveRoom() {
         console.log('leaving room')
+        this.els.roomCounter.innerText = ''
+        this.users = null
         this.ws.close()
         this.ws = null
+        this.renderUpdate()
     }
 
     wsClose() {
         console.log('socket closed')
+        if (this.users != null) {
+            this.leaveRoom()
+        }
     }
 
     wsMessage(msg) {
-        const payload = JSON.parse(msg.data)
+        const { payload, action } = JSON.parse(msg.data)
         console.log(payload)
 
-        if (payload.type === 'rosterUpdate') {
+        if (action === 'rosterUpdate') {
             this.updateRoster(payload)
+        }
+
+        if (action === 'startgame') {
+            this._startGameCallback(payload)
         }
     }
 
     updateRoster(payload) {
         this.users = payload.users
         this.els.roomCounter.innerText = payload.users.length
-        this.renderUsers()
-    }
-
-    setOnRoomChange(f) {
-        this.onRoomChangeCallback = f
-    }
-
-    onRoomChange() {
-        this.onRoomChangeCallback(roomdata)
+        this.renderUpdate()
     }
 
     static template_users(usersArray) {
@@ -176,6 +195,13 @@ export default class RoomSettings extends Component {
             ${usersArray.map(e=> `<li>${e.name}</li>` ).join('')}
         </ul>
         `
+    }
+
+    static template_attend(bool) {
+        if (bool) {
+            return /*html*/ `
+            `
+        }
     }
 
     static template() {
@@ -228,9 +254,14 @@ export default class RoomSettings extends Component {
                     <input type="text" value="" id="roomid" disabled>
                     <button id="bggl-copy-room"><i class="material-icons">filter_none</i> Copy</button>
                     <div class="userslist"></div>
-                    <label for="bggl-username">What's your name?</label>
-                    <input id="bggl-username" type="text" />
-                    <button id="bggl-room-done">Done</button>
+                    <div id="bggl-join-room">
+                        <label for="bggl-username">What's your name?</label>
+                        <input id="bggl-username" type="text" />
+                        <button class="bggl-room-done">Join</button>
+                    </div>
+                    <div id="bggl-leave-room">
+                        <button class="bggl-room-done">Leave Room</button>
+                    </div>
                 </form>
             </div>
         </div>`
