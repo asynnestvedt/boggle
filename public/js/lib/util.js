@@ -1,7 +1,6 @@
 const Util = {
-    makeRoomID: () => {
-        return Math.random().toString(36).substring(6) + Math.random().toString(36)
-            .substring(6)
+    makeID: () => {
+        return [...Array(28)].map(() => (~~(Math.random() * 36)).toString(36)).join('')
     },
 
     setCookie: (cname, cvalue, exdays) => {
