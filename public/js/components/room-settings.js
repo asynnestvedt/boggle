@@ -215,16 +215,16 @@ export default class RoomSettings extends Component {
                 position: absolute;
                 top: 104px;
                 left: 0;
-                width: 100%;
                 height: calc(100% - 104px);
                 text-align: center;
-                padding: 20px;
+                width: 100vw;
                 background-color: rgba(0, 0, 0, 0.9);
             }
 
             .overlay-content {
                 text-align: left;
                 display: inline-block;
+                margin: 20px;
             }
 
             .overlay-content input[type="text"] {
@@ -232,7 +232,9 @@ export default class RoomSettings extends Component {
                 background-color: #e4e4e4;
                 color: rgba(0, 0, 0, 0.6);
                 font-weight: bold;
-                
+                border-style: solid;
+                border-radius: 12px;
+                max-width: 45%;
             }
 
             .overlay-content button {
