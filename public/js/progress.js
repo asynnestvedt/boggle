@@ -1,10 +1,10 @@
 /**
  * timer class acts as a timer and can update progress bars.
  */
-class Timer {
+export class Timer {
     /**
-     * Accepts optional object with elements and orienations having format e.g.{bars:[], orientations: []}
-     * @param {object} data - (optional) includes elements and oritnations with format e.g.{bars:[], orientations: []}
+     * Accepts optional object with elements and orientations having format e.g.{bars:[], orientations: []}
+     * @param {object} data - (optional) includes elements and orientations with format e.g.{bars:[], orientations: []}
      */
     constructor(data) {
         this.bars = []
@@ -96,7 +96,7 @@ class Timer {
  * Create vertical or horizontal progress bars
  * to style the bar use selector .progress-inner
  */
-class ProgressBar {
+export class ProgressBar {
     /**
      * 
      * @param {object} el - block element to hold progress bar
