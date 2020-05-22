@@ -181,8 +181,6 @@ body::-webkit-scrollbar {
 }
 
 .main-wrapper {
-
-    max-width: 100vh !important;
     margin: auto;
 }
 
@@ -294,8 +292,6 @@ div.selected {
     padding: 5%;
     overflow: hidden;
     font-weight: 700;
-    vertical-align: middle;
-    text-align: center;
     -webkit-user-select: none; /* Safari */        
     -moz-user-select: none; /* Firefox */
     -ms-user-select: none; /* IE10+/Edge */
@@ -335,28 +331,28 @@ div.selected {
 }
 
 .four-by-four .letters {
-    font-size: 10vmin;
-    line-height: 10vmin;
+    font-size: 10vw;
+    line-height: 10vw;
 }
 
 .four-by-four .r0 {
-    left: 0vmin;
-    top: 4vmin;
+    left: 0;
+    top: 20%;
 }
 
 .four-by-four .r90 {
-    left: 4vmin;
-    top: 0vmin;
+    left: 20%;
+    top: 0;
 }
 
 .four-by-four .r180 {
-    left: 0vmin;
-    top: -4vmin;
+    left: 0;
+    top: -20%;
 }
 
 .four-by-four .r270 {
-    left: -4vmin;
-    top: 0vmin;
+    left: -20%;
+    top: 0;
 }
 
 /**
@@ -370,28 +366,28 @@ div.selected {
 }
 
 .five-by-five .letters {
-    font-size: 10vmin;
-    line-height: 10vmin;
+    font-size: 10vw;
+    line-height: 10vw;
 }
 
 .five-by-five .r0 {
-    left: 0vmin;
-    top: 2vmin;
+    left: 0;
+    top: 10%;
 }
 
 .five-by-five .r90 {
-    left: 2vmin;
-    top: 0vmin;
+    left: 10%;
+    top: 0;
 }
 
 .five-by-five .r180 {
-    left: 0vmin;
-    top: -2vmin;
+    left: 0;
+    top: -10%;
 }
 
 .five-by-five .r270 {
-    left: -2vmin;
-    top: 0vmin;
+    left: -10%;
+    top: 0;
 }
 
 /**
@@ -451,7 +447,7 @@ div.selected {
 .switch-field {
     overflow: hidden;
     text-align: center;
-    padding: 5px;
+    /* padding: 5px; */
 }
 
 .switch-field input {
@@ -475,7 +471,7 @@ div.selected {
     font-weight: bold;
     text-align: center;
     text-shadow: none;
-    padding: 8px 1%;
+    padding: 0 1%;
     -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
     -webkit-transition: all 0.1s ease-in-out;
@@ -507,16 +503,15 @@ div.selected {
 #settings form {
     width: 90%;
     max-width: 400px;
-    padding: 10px;
-    font-size: 4vmin;
+    margin: 0 auto !important;
+    font-size: min(max(4vw, 1.2rem), 1.6rem);
 }
 
 #settings button {
     display: inline-block;
     margin: 30px 0;
-    padding: 3vmin 0;
-    font-size: 4vmin;
-
+    padding: 1.2rem 0;
+    font-size: min(max(4vw, 1.2rem), 1.6rem);
 }
 
 #settings button i.material-icons {
@@ -525,7 +520,7 @@ div.selected {
 
 #settings form label {
     display: block;
-    padding: 4vmin 0;
+    padding: min(max(4vw, 1.2rem), 1.6rem) 0;
     width: 50%;
 }
 
@@ -639,6 +634,34 @@ div.selected {
         -moz-box-shadow: 0 2px 2px #888;
         box-shadow: 0 2px 2px #888;
     }
+
+    #settings form {
+        font-size: 2rem;
+    }
+
+    .four-by-four div.die {
+        width: 159px;
+    }
+
+    .five-by-five div.die {
+        width: 124px;
+    }
+
+    .four-by-four .letters {
+        font-size: 77px;
+        line-height: 77px;
+    }
+    .five-by-five .letters {
+        font-size: 77px;
+        line-height: 77px;
+    }
+
+    
+    #board {
+        width: 692px;
+    }
+
+
 
     /* ============
     WIDE: Menu

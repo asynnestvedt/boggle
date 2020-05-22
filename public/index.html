@@ -44,6 +44,11 @@
                 <div id="pbaryinv" class="progress-bar"></div>
 
                 <div id="board" class="board soft-corners four-by-four"></div>
+                <div style="position: relative; bottom: -20px;">
+                    <form>
+                        <button id="bggl-save-word" class="hidden">save word</button>
+                    </form>
+                </div>
             </div>
             
             <x-roomsettings></x-roomsettings>
@@ -95,19 +100,9 @@
         </div> <!-- #main -->
     </div> <!-- #main-container -->
 
-    <script type="module">
-        // import { default as App } from './js/main.js'
-        // import {} from './js/components/room-settings.js'
-        // setTimeout(()=>{
-        //     const newel = document.createElement("X-RoomSettings")
-        //     document.body.appendChild(newel)
-        // },1000)
-    </script>
 
     <script src="js/components/room-settings.js" type="module"></script>
     <script src="js/main.js" type="module"></script>
-    <script src="js/progress.js"></script>
-
 
 </body>
 

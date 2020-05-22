@@ -1,7 +1,7 @@
 'use strict'
 
-import { default as Util } from './lib/util.js'
 import { ApiGet, ApiPost } from './lib/api.js'
+import { Timer, ProgressBar } from './progress.js'
 
 /**
  * App class organizes and controls components and data and high level UI state.
@@ -181,17 +181,19 @@ export default class App {
             console.log('could not re-enable display sleep')
         }
 
+        const savedWords = this.data.board.wordlist
+        console.log(savedWords)
         this.data.board.disable()
 
-        if (this.data.solution) {
+        if (savedWords) {
             /** sort solution words */
             // let sortedWords = this.data.solution.Words.sort(function (a, b) { return (a.Word < b.Word) ? -1 : (a.Word > b.Word) ? 1 : 0 })
 
             /** display EOGame word list. yuck!... change to templating or element.create  */
             let htmlStr = ''
-            for (let i = 0; i < this.data.solution.Words.length; ++i) {
-                let word = this.data.solution.Words[i]
-                htmlStr += '<div><b>' + word.Word + '</b> &nbsp;' + word.Definition + '</div>'
+            for (let i = 0; i < savedWords.length; ++i) {
+                let word = savedWords[i]
+                htmlStr += '<div><b>' + word + '</b></div>'
             }
             this.data.els.solution.innerHTML = htmlStr
             this.data.els.solution.style.display = 'block'
@@ -274,9 +276,31 @@ class Settings {
 class BoggleBoard {
     constructor(el, width, height) {
         this.el = document.getElementById(el)
+        this.saveWordButton = document.getElementById('bggl-save-word')
         this.width = width || 4
         this.height = height || 4
         this.dice = []
+        this.lastSelectedDie = null
+        this.selectedWord = []
+        this.selectedPositions = []
+        this._wordlist = new Set()
+        this.disabled = false
+
+        this.saveWordButton.onclick = this.saveWord.bind(this)
+    }
+
+    get wordlist() {
+        return Array.from(this._wordlist).sort()
+    }
+
+    disable(d) {
+        if (d === undefined) {
+            d = true
+        }
+        this.disabled = d
+        if (this.disabled) {
+            this.clearSelection()
+        }
     }
 
     hide() {
@@ -315,12 +339,122 @@ class BoggleBoard {
             }
 
             div.setAttribute('class', 'die')
+            div.setAttribute('data-letter', dice[i].selected)
+            div.setAttribute('data-pos', i+1)
             div.appendChild(span)
 
+            div.onclick = this.dieClick.bind(this)
             this.el.appendChild(div)
         }
     }
 
+    dieClick(ev) {
+        if (this.disabled) {
+            return
+        }
+
+        const el = ev.target.tagName === 'SPAN' ? ev.target.parentNode : ev.target
+        if (el.classList.contains('selected')) {
+            el.classList.remove('selected')
+        } else {
+            el.classList.add('selected')
+        }
+
+        console.log(el.dataset.pos)
+
+        if( this.selectedPositions.includes(parseInt(el.dataset.pos)) ) {
+            this.clearSelection()
+        } else if (this.lastSelectedDie === null || allowableMove(this.width, this.lastSelectedDie, el.dataset.pos)) {
+            this.doMove(el)
+        } else {
+            this.clearSelection()
+        }
+
+        this.renderSaveWordButton()
+    }
+
+    renderSaveWordButton() {
+        if  (this.selectedWord.length >= 3) {
+            this.saveWordButton.classList.remove('hidden')
+        } else if (! this.saveWordButton.classList.contains('hidden')) {
+            this.saveWordButton.classList.add('hidden')
+        }
+    }
+
+    doMove(el) {
+        this.selectedWord.push(el.dataset.letter)
+        this.selectedPositions.push(parseInt(el.dataset.pos))
+        this.lastSelectedDie = el.dataset.pos
+    }
+
+    clearSelection() {
+        this.el.querySelectorAll('div.die').forEach(e => e.classList.remove('selected'))
+        this.selectedWord = []
+        this.selectedPositions = []
+        this.lastSelectedDie = null
+        this.renderSaveWordButton()
+    }
+
+    saveWord(ev) {
+        ev.preventDefault()
+        this._wordlist.add(this.selectedWord.join(''))
+        this.clearSelection()
+    }
+
+}
+
+
+function allowableMove(width, currentPos, nextPos) {
+    const validMap = {
+        4: {
+            1: [2,5,6],
+            2: [1,3,5,6,7],
+            3: [2,4,6,7,8],
+            4: [3,7,8],
+            5: [1,2,6,9,10],
+            6: [1,2,3,5,7,9,10,11],
+            7: [2,3,4,6,8,10,11,12],
+            8: [3,4,7,11,12],
+            9: [5,6,10,13,14],
+            10: [5,6,7,9,11,13,14,15],
+            11: [6,7,8,10,12,14,15,16],
+            12: [7,8,11,15,16],
+            13: [9,10,14],
+            14: [9,10,11,13,15],
+            15: [10,11,12,14,16],
+            16: [11,12,15]
+        },
+
+        5: {
+            1: [2,6,7],
+            2: [1,3,6,7,8],
+            3: [2,4,7,8,9],
+            4: [3,5,8,9,10],
+            5: [4,9,10],
+            6: [1,2,7,11,12],
+            7: [1,2,3,6,8,11,12,13],
+            8: [2,3,4,7,9,12,13,14],
+            9: [3,4,5,8,10,13,14,15],
+            10: [4,5,9,14,15],
+            11: [6,7,12,16,17],
+            12: [6,7,8,11,13,16,17,18],
+            13: [7,8,9,12,14,17,18,19],
+            14: [8,9,10,13,15,18,19,20],
+            15: [9,10,14,19,20],
+            16: [11,12,17,21,22],
+            17: [11,12,13,16,18,21,22,23],
+            18: [12,13,14,17,19,22,23,24],
+            19: [13,14,15,18,20,23,24,25],
+            20: [14,15,19,24,25],
+            21: [16,17,22],
+            22: [16,17,18,21,23],
+            23: [17,18,19,22,24],
+            24: [18,19,20,23,25],
+            25: [19,20,24],
+        }
+    }
+
+    return validMap[parseInt(width)][parseInt(currentPos)].includes(parseInt(nextPos))
 }
 
 class ScreenManager {

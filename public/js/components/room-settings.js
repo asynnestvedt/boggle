@@ -122,10 +122,16 @@ export default class RoomSettings extends Component {
         console.log(settings)
     }
 
-    hide() { this.els.overlay.style.display = 'none' }
+    hide() { 
+        if( ! this.els.overlay.classList.contains('hidden') ) {
+            this.els.overlay.classList.add('hidden')
+        }
+    }
 
     show(callback) {
-        this.els.overlay.style.display = 'block'
+        if( this.els.overlay.classList.contains('hidden') ) {
+            this.els.overlay.classList.remove('hidden')
+        }
         this.callback = callback || this.defaultHandler
     }
 
@@ -211,17 +217,14 @@ export default class RoomSettings extends Component {
         return /*html*/`
         <style>
             .overlay {
-                display: none; /** default view state */
-                position: absolute;
-                top: 104px;
-                left: 0;
-                height: calc(100% - 104px);
-                text-align: center;
-                width: 100vw;
-                background-color: rgba(0, 0, 0, 0.9);
+                display: inline-block;
+                border-radius: 14px;
+                border: 1px solid white;
+                margin: 0 auto;
             }
 
             .overlay-content {
+                max-width: 600px;
                 text-align: left;
                 display: inline-block;
                 margin: 20px;
