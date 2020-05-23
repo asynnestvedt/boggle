@@ -21,6 +21,7 @@ export default class RoomSettings extends Component {
             joinRoom: this.querySelector('#bggl-join-room')
         }
         this.ws = null
+        this.pingTimer = null
         this.init()
     }
 
@@ -33,6 +34,7 @@ export default class RoomSettings extends Component {
                 this.els.joinRoom.classList.remove('hidden')
             }
         }
+        this.querySelectorAll('button.bggl-room-done').forEach(b => b.onclick = this.doneButtonHandler.bind(this))
     }
 
     connectedCallback() {
@@ -41,9 +43,11 @@ export default class RoomSettings extends Component {
     }
 
     disconnectedCallback() {
+        
     }
 
     attributeChangedCallback(attrName, oldVal, newVal) {
+
     }
 
     init() {
@@ -63,8 +67,6 @@ export default class RoomSettings extends Component {
         this.name = Util.getCookie('bggl-username')
         this.els.username.value = this.name
         
-        
-        this.els.doneButtons.forEach(b => b.onclick = this.doneButtonHandler.bind(this))
         this.els.closeButton.onclick = this.hide.bind(this)
     }
 
@@ -169,14 +171,14 @@ export default class RoomSettings extends Component {
     }
 
     wsKeepalive() {
-        this.ws.pingTimer = setInterval(()=>{
+        this.pingTimer = setInterval(()=>{
             this.sendMessage('ping',{})
         },20000)
     }
 
     wsClose() {
-        clearInterval(this.ws.pingTimer)
-        delete (this.ws.pingTimer)
+        clearInterval(this.pingTimer)
+        delete (this.pingTimer)
         console.log('socket closed')
         if (this.users != null) {
             this.leaveRoom()
