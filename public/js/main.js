@@ -21,7 +21,8 @@ export default class App {
                 solution: document.getElementById('bggl-solution'),
                 header: document.querySelector('.header-container'),
                 footer: document.querySelector('.footer-container'),
-                users: document.getElementById('bggl-people')
+                users: document.getElementById('bggl-people'),
+                rightpullout: document.querySelector('x-rightpullout')
             },
             /**
              * boggle board initialized during game start
@@ -85,7 +86,6 @@ export default class App {
                 this.data.board.clear()
                 this.data.board.hide()
             }
-            this.data.els.solution.style.display = 'none'
             this.data.settings.show()
             this.data.timer.stop()
         }.bind(this))
@@ -120,19 +120,19 @@ export default class App {
 
 
     startgame(data) {
+        document.querySelector('x-rightpullout').hide()
         this.data.settings.hide()
         /** create new board - assume square */
         const dimen = Math.sqrt(data.dice.length)
         this.data.board = new BoggleBoard('board', dimen, dimen)
         this.data.board.show()
-        /** clear solution */
-        this.data.els.solution.innerHTML = ''
+        /** clear and hide last games answers */
+        this.data.els.rightpullout.clear()
+        this.data.els.rightpullout.clear()
         /** render board with dice */
         this.data.board.render(data.dice)
         /** play dice shake sound */
         this.data.sounds.shake.play()
-        /** fire request for solution to server */
-        // this.reqSolution()
         /** start the timer */
         this.data.timer.stop()
         this.data.timer.start({
@@ -186,17 +186,7 @@ export default class App {
         this.data.board.disable()
 
         if (savedWords) {
-            /** sort solution words */
-            // let sortedWords = this.data.solution.Words.sort(function (a, b) { return (a.Word < b.Word) ? -1 : (a.Word > b.Word) ? 1 : 0 })
-
-            /** display EOGame word list. yuck!... change to templating or element.create  */
-            let htmlStr = ''
-            for (let i = 0; i < savedWords.length; ++i) {
-                let word = savedWords[i]
-                htmlStr += '<div><b>' + word + '</b></div>'
-            }
-            this.data.els.solution.innerHTML = htmlStr
-            this.data.els.solution.style.display = 'block'
+            document.querySelector('x-rightpullout').show(savedWords)
         }
         
     }

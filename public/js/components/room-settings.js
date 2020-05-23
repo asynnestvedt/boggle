@@ -25,13 +25,13 @@ export default class RoomSettings extends Component {
     }
 
     renderUpdate() {
-        this.els.usersList.innerHTML = RoomSettings.template_users(this.users)
-        if (this.ws) {
-            this.els.joinRoom.style.display = 'none'
-            this.els.leaveRoom.style.display = 'block'
+        this.els.usersList.innerHTML = RoomSettings.template_users(this.users, this.userid)
+        if (this.ws && this.name != 'Player') {
+            this.els.joinRoom.classList.add('hidden')
         } else {
-            this.els.joinRoom.style.display = 'block'
-            this.els.leaveRoom.style.display = 'none'
+            if (this.els.joinRoom.classList.contains('hidden')) {
+                this.els.joinRoom.classList.remove('hidden')
+            }
         }
     }
 
@@ -80,7 +80,9 @@ export default class RoomSettings extends Component {
         
         if (existingRoom) {
             this.show()
-            this.joinRoom()
+            if (this.name != '') {
+                this.joinRoom()
+            }
         }
         this.els.roomIdText.value = url.toString()
     }
@@ -114,8 +116,6 @@ export default class RoomSettings extends Component {
         if (name != '') {
             this.joinRoom()
         }
-
-        this.hide()
     }
 
     defaultHandler(settings) {
@@ -140,7 +140,7 @@ export default class RoomSettings extends Component {
         if (this.ws == null) {
             const protocol = window.location.protocol === 'http:' ? 'ws' : 'wss'
             this.ws = new WebSocket(`${protocol}://${window.location.host}/api/chat?roomid=${this.roomid}&uid=${this.userid}&name=${this.name}`)
-            this.ws.onopen = this.defaultHandler.bind(this)
+            this.ws.onopen = this.wsKeepalive.bind(this)
             this.ws.onmessage = this.wsMessage.bind(this)
             this.ws.onclose = this.wsClose.bind(this)
         } else {
@@ -168,7 +168,15 @@ export default class RoomSettings extends Component {
         this.renderUpdate()
     }
 
+    wsKeepalive() {
+        this.ws.pingTimer = setInterval(()=>{
+            this.sendMessage('ping',{})
+        },20000)
+    }
+
     wsClose() {
+        clearInterval(this.ws.pingTimer)
+        delete (this.ws.pingTimer)
         console.log('socket closed')
         if (this.users != null) {
             this.leaveRoom()
@@ -194,23 +202,16 @@ export default class RoomSettings extends Component {
         this.renderUpdate()
     }
 
-    static template_users(usersArray) {
+    static template_users(usersArray, uid) {
         if (! usersArray || usersArray.length === 0) {
-            return /*html*/ `<h4>Looks like its just you in this room. invite some friends!</h4>`
+            return /*html*/ '<p>Nobody here</p>'
         }
-        
+
         return /*html*/ `
         <ul>
-            ${usersArray.map(e=> `<li>${e.name}</li>` ).join('')}
+            ${usersArray.map(e=> `<li>${e.name} ${e.uid === uid ? '<button class="bggl-room-done">Leave Room</button>' : ''}</li>` ).join('')}
         </ul>
         `
-    }
-
-    static template_attend(bool) {
-        if (bool) {
-            return /*html*/ `
-            `
-        }
     }
 
     static template() {
@@ -257,19 +258,18 @@ export default class RoomSettings extends Component {
             <div class="overlay-content">
                 <span class="close">X</span>
                 <form>
-                    <h3 style="text-align: center">Multiplayer Settings</h3>
-                    <h4>Share Room Link</h4>
-                    <input type="text" value="" id="roomid" disabled>
-                    <button id="bggl-copy-room"><i class="material-icons">filter_none</i> Copy</button>
-                    <div class="userslist"></div>
+                    <h4 style="text-align: center">Multiplayer Settings</h4>
                     <div id="bggl-join-room">
-                        <label for="bggl-username">What's your name?</label>
-                        <input id="bggl-username" type="text" />
-                        <button class="bggl-room-done">Join</button>
+                        <label for="bggl-username">What's your name?</label><br/>
+                        <input id="bggl-username" type="text">
+                        <button class="bggl-room-done">Join Room</button>
+                        <br /><br/>
                     </div>
-                    <div id="bggl-leave-room">
-                        <button class="bggl-room-done">Leave Room</button>
-                    </div>
+                    <label for="roomid">Share link to room</label><br>
+                    <input type="text" value="" id="roomid" disabled="">
+                    <button id="bggl-copy-room"><i class="material-icons">filter_none</i> Copy</button>
+                    <h4 style="text-align: center">Guest List</h4>
+                    <div class="userslist"><p>Nobody here</p></div>
                 </form>
             </div>
         </div>`
