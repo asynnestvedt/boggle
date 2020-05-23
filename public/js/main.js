@@ -241,11 +241,15 @@ class Settings {
     }
 
     hide() {
-        this.els.root.style.display = 'none'
+        if( ! this.els.root.classList.contains('hidden')) {
+            this.els.root.classList.add('hidden')
+        }
     }
 
     show() {
-        this.els.root.style.display = 'block'
+        if(this.els.root.classList.contains('hidden')) {
+            this.els.root.classList.remove('hidden')
+        }
     }
 
     init() {
