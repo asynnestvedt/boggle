@@ -110,7 +110,6 @@ function createOrJoinRoom(ws, room) {
     if (! data.rooms[room].some(e => e.uid === ws.uid)) {
         data.rooms[room].push(ws)
         data.roomByUser[ws.uid] = data.rooms[room] /* User can only have one room! */
-        console.log(`connected user ${ws.uid} in room ${room}`)
     }
 
     notifyRoom(data.rooms[room],{
@@ -159,7 +158,6 @@ wss.on('connection', function (ws, req) {
     ws.room = createOrJoinRoom(ws, roomid)
 
     ws.on('close', (exitcode) => {
-        console.log(ws)
         leaveRoom(ws)
     })
     
