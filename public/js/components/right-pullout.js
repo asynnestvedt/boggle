@@ -74,7 +74,7 @@ export default class RightPullOut extends ShadowComponent {
     renderWords(words) {
         const wordtemplate = (word, padding, points)=> {
             return /*html*/`
-            <div class="word" data-word="BELL" data-points="2">
+            <div class="word" data-word="BELL" data-points="${points}">
                 <span><b>${word}</b>${'&nbsp;'.repeat(padding)}${points}</span>
             </div>`
         }
