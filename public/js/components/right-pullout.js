@@ -116,7 +116,7 @@ export default class RightPullOut extends ShadowComponent {
         #slideout {
             z-index: 1000;
             position: fixed;
-            top: 114px;
+            top: 96px;
             right: 0;
             padding: 1rem;
             -webkit-transition-duration: 0.3s;
@@ -143,7 +143,7 @@ export default class RightPullOut extends ShadowComponent {
             font-family: monospace, monospace;
             background-color: #334;
             position: fixed;
-            top: 104px;
+            top: 86px;
             right: -200px;
             -webkit-transition-duration: 0.3s;
             -moz-transition-duration: 0.3s;
