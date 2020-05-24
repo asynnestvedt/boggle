@@ -47,16 +47,18 @@ export default class App {
              */
             timer: new Timer({
                 bars: [
-                    document.getElementById('pbarx'),
                     document.getElementById('pbarxinv'),
-                    document.getElementById('pbary'),
-                    document.getElementById('pbaryinv'),
+
+                    // document.getElementById('pbarx'),
+                    // document.getElementById('pbarxinv'),
+                    // document.getElementById('pbary'),
+                    // document.getElementById('pbaryinv'),
                 ],
                 orientations: [
                     ProgressBar.orient.X,
-                    ProgressBar.orient.XINV,
-                    ProgressBar.orient.Y,
-                    ProgressBar.orient.YINV,
+                    // ProgressBar.orient.XINV,
+                    // ProgressBar.orient.Y,
+                    // ProgressBar.orient.YINV,
                 ]
             })
         }
