@@ -176,6 +176,13 @@ body::-webkit-scrollbar {
     display: none;
 }
 
+.header-container {
+    -webkit-user-select: none; /* Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    user-select: none; /* Standard */
+}
+
 .main-container {
     height: 100%;
 }
@@ -248,6 +255,11 @@ footer h3 {
 
 #bggl-ctl-tray .material-icons {
     padding: 13px;
+}
+
+#bggl-people-count {
+    position: absolute; right: 1px; top: 1px;
+    color: #A5DC86;
 }
 
 /**
