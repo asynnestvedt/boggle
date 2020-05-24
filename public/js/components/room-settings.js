@@ -148,6 +148,10 @@ export default class RoomSettings extends Component {
         } else {
             this.sendMessage('join', { name: this.els.username.value.trim() } )
         }
+
+        window.onbeforeunload = function () {
+            return 'you are in a room with other guests. Are you sure you would like to navigate away?';
+        }
     }
 
 
