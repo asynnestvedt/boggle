@@ -22,6 +22,7 @@ export default class RoomSettings extends Component {
         }
         this.ws = null
         this.pingTimer = null
+        this.hide()
         this.init()
     }
 
@@ -144,6 +145,14 @@ export default class RoomSettings extends Component {
         }
     }
     
+    openRoomDoor() {
+        const protocol = window.location.protocol === 'http:' ? 'ws' : 'wss'
+        this.ws = new WebSocket(`${protocol}://${window.location.host}/api/chat?roomid=${this.roomid}&uid=${this.userid}&name=${this.name}`)
+        this.ws.onopen = this.wsKeepalive.bind(this)
+        this.ws.onmessage = this.wsMessage.bind(this)
+        this.ws.onclose = this.wsClose.bind(this)
+    }
+
     joinRoom() {
         if (this.ws == null) {
             const protocol = window.location.protocol === 'http:' ? 'ws' : 'wss'
@@ -233,7 +242,7 @@ export default class RoomSettings extends Component {
                 display: inline-block;
                 border-radius: 14px;
                 border: 1px solid white;
-                margin: 0 auto;
+                margin: 0 auto 18px auto;
             }
 
             .overlay-content {

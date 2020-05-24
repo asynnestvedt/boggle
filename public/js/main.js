@@ -123,7 +123,9 @@ export default class App {
 
     startgame(data) {
         document.querySelector('x-rightpullout').hide()
+        document.querySelector('x-roomsettings').hide()
         this.data.settings.hide()
+        
         /** create new board - assume square */
         const dimen = Math.sqrt(data.dice.length)
         this.data.board = new BoggleBoard('board', dimen, dimen)
@@ -153,9 +155,9 @@ export default class App {
         
 
         /** add midway timer for countdown music */
-        this.data.timer.at(data.duration - 31, function () {
-            this.data.sounds.countdown.play()
-        }.bind(this))
+        // this.data.timer.at(data.duration - 31, function () {
+        //     this.data.sounds.countdown.play()
+        // }.bind(this))
     }
 
     /**
@@ -283,6 +285,8 @@ class BoggleBoard {
         this.disabled = false
 
         this.saveWordButton.onclick = this.saveWord.bind(this)
+        this.el.onclick = this.dieClick.bind(this)
+        this.disable(false)
     }
 
     get wordlist() {
@@ -296,6 +300,9 @@ class BoggleBoard {
         this.disabled = d
         if (this.disabled) {
             this.clearSelection()
+            this.el.classList.add('disabled')
+        } else {
+            this.el.classList.remove('disabled')
         }
     }
 
@@ -339,7 +346,6 @@ class BoggleBoard {
             div.setAttribute('data-pos', i+1)
             div.appendChild(span)
 
-            div.onclick = this.dieClick.bind(this)
             this.el.appendChild(div)
         }
     }
@@ -349,7 +355,15 @@ class BoggleBoard {
             return
         }
 
-        const el = ev.target.tagName === 'SPAN' ? ev.target.parentNode : ev.target
+        let el
+        if (ev.target.tagName === 'SPAN' && ev.target.classList.contains('letters') ) {
+            el = ev.target.parentNode;
+        } else if ( ev.target.tagName === 'DIV' && ev.target.classList.contains('die') ) {
+            el = ev.target
+        } else {
+            return
+        }
+
         if (el.classList.contains('selected')) {
             el.classList.remove('selected')
         } else {

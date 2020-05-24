@@ -283,6 +283,10 @@ footer h3 {
     box-shadow: inset 4px 4px 2px rgba(255, 255, 255, .4), inset -3px -3px 2px rgba(0, 0, 0, .4);
 }
 
+#board.disabled .die {
+    background: rgb(211, 210, 210);
+}
+
 div.selected {
     background: blanchedalmond;
     color: royalblue;

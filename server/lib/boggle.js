@@ -10,8 +10,8 @@ class BoggleGame {
      * @param {number} [duration=180] duration - duration of gameplay in seconds
      */
     constructor(width, height, duration) {
-        this.board = new BoggleBoard(width, height);
-        this.duration = duration || 180; /** in seconds */
+        this.board = new BoggleBoard(width, height)
+        this.duration = duration || 180 /** in seconds */
     }
 
 
@@ -88,12 +88,12 @@ class BoggleGame {
             ['O', 'O', 'O', 'T', 'T', 'U']
         ];
 
-        let diceSet = standardNew;
+        let diceSet = standardNew
         if (this.width === 5) {
-            diceSet = bigboggle;
+            diceSet = bigboggle
         }
 
-        return diceSet.slice().sort(function (a, b) { return 0.5 - Math.random() });
+        return diceSet.slice().sort(function () { return 0.5 - Math.random() })
     }
 
     /**
