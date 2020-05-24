@@ -130,14 +130,20 @@ export default class RoomSettings extends Component {
         }
     }
 
-    show(callback) {
+    show() {
         if( this.els.overlay.classList.contains('hidden') ) {
             this.els.overlay.classList.remove('hidden')
         }
-        this.callback = callback || this.defaultHandler
     }
 
-
+    toggle() {
+        if( this.els.overlay.classList.contains('hidden') ) {
+            this.els.overlay.classList.remove('hidden')
+        } else {
+            this.els.overlay.classList.add('hidden')
+        }
+    }
+    
     joinRoom() {
         if (this.ws == null) {
             const protocol = window.location.protocol === 'http:' ? 'ws' : 'wss'
