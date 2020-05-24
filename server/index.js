@@ -15,7 +15,8 @@ let data = {
     roomByUser: {},
 }
 
-
+const ROOM_IDLE_CLEANUP = 60 * 119 //seconds
+const CLEANUP_INTERVAL = 60 * 20 //seconds
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -32,8 +33,6 @@ app.get('/api/board/:dimen?', function (req, res, next) {
     } catch (e) { /** no dimensions requested */ }
     const board = new boggle.Board(dimensions[0], dimensions[1])
 
-    const room = req.query.room || null
-
     if (req.query.orientation && req.query.orientation === 'natural') {
         board.dice.forEach(element => {
             element.orientation = 0
@@ -41,10 +40,6 @@ app.get('/api/board/:dimen?', function (req, res, next) {
     }
 
     res.status(200).send(JSON.stringify({ data: board.dice }))
-
-    if (data.rooms && data.rooms[room]) {
-        data.rooms[room].forEach(ws => ws.send(`START|${JSON.stringify({ data: board.dice })}`))
-    }
 })
 
 /**
@@ -105,10 +100,12 @@ var wss = new WebSocketServer({ server: server, path: '/api/chat' })
 
 
 function createOrJoinRoom(ws, room) {
-    data.rooms[room] = data.rooms[room] || []
+    data.rooms[room] = data.rooms[room] || {
+        users: []
+    }
     
-    if (! data.rooms[room].some(e => e.uid === ws.uid)) {
-        data.rooms[room].push(ws)
+    if (! data.rooms[room].users.some(e => e.uid === ws.uid)) {
+        data.rooms[room].users.push(ws)
         data.roomByUser[ws.uid] = data.rooms[room] /* User can only have one room! */
     }
 
@@ -116,7 +113,7 @@ function createOrJoinRoom(ws, room) {
         action: 'rosterUpdate',
         payload: {
             text: `${ws.displayname} has joined the room.`,
-            users: (data.rooms[room] || []).map(e => { return { uid: e.uid, name: e.displayname } })
+            users: (data.rooms[room].users || []).map(e => { return { uid: e.uid, name: e.displayname } })
         }
     })
     return data.rooms[room]
@@ -124,18 +121,24 @@ function createOrJoinRoom(ws, room) {
 
 function leaveRoom(ws) {
     delete data.roomByUser[ws.uid]
-    data.rooms[ws.roomid].splice(data.rooms[ws.roomid].findIndex(v => v.uid === ws.uid), 1)
+
+    /** empty room already gone */
+    if (!data.rooms[ws.roomid]) { return }
+
+    data.rooms[ws.roomid].users.splice(data.rooms[ws.roomid].users.findIndex(v => v.uid === ws.uid), 1)
     notifyRoom(data.rooms[ws.roomid],{
         action: 'rosterUpdate',
         payload: {
             text: `${ws.displayname} has left the room.`,
-            users: (data.rooms[ws.roomid] || []).map(e => { return { uid: e.uid, name: e.displayname } })
+            users: data.rooms[ws.roomid].users.map(e => { return { uid: e.uid, name: e.displayname } })
         }
     })
 }
 
 function notifyRoom(room, payload) {
-    (room || []).forEach(ws => {
+    const ts = Math.floor((new Date()).getTime()/1000)
+    room.lastaccessed = ts
+    room.users.forEach(ws => {
         try {
             ws.send(JSON.stringify(payload))
         } catch (e) {
@@ -151,8 +154,6 @@ wss.on('connection', function (ws, req) {
     ws.uid = uid
     ws.roomid = roomid
     ws.displayname = name
-
-    data.conns
 
     // 2. create or join room
     ws.room = createOrJoinRoom(ws, roomid)
@@ -170,18 +171,36 @@ wss.on('connection', function (ws, req) {
 }.bind(this))
 
 
+setInterval( ()=> {
+    const starting = roomCount()
+    cleanRooms()
+    const ending = roomCount()
+    console.log(`${ending} active rooms, ${starting - ending} cleaned up`)
+}, CLEANUP_INTERVAL * 1000)
 
 
-const Messages =  {
-    roomUpdate: (room) => {
-        data.rooms[room].forEach(ws => {
-            try {
-                ws.send({
-                    
-                })
-            } catch (e) {
-                console.log(e)
-            }
-        })
+function roomCount() {
+    let count = 0
+    for (var k in data.rooms) {
+        if (data.rooms.hasOwnProperty(k)) {
+            ++count
+        }
+    }
+    return count
+}
+
+function cleanRooms() {
+    const today = new Date()
+    const ts = Math.floor(today.getTime()/1000)
+    for (let k in data.rooms) {
+        if (ts - data.rooms[k].lastaccessed >= ROOM_IDLE_CLEANUP) {
+            data.rooms[k].users.forEach((ws) => {
+                ws.close()
+                if (data.roomByUser[ws.uid]) {
+                    delete data.roomByUser[ws.uid]
+                }
+            })
+            delete data.rooms[k]
+        }
     }
 }
