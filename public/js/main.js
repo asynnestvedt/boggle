@@ -93,7 +93,7 @@ export default class App {
         }.bind(this))
 
         this.data.els.users.onclick = () => {
-            this.data.roomSettings.show()
+            this.data.roomSettings.toggle()
         }
     }
 
