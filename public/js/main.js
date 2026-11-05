@@ -97,6 +97,8 @@ class App {
         this.state = null
         this.clearClock()
         this.connected = false
+        $('#connection-status').textContent = user ? 'Connecting…' : 'Disconnected'
+        $('#connection-dot').classList.remove('online')
         this.path = []
         this.pendingWord = null
         $('#my-words').textContent = ''
@@ -105,6 +107,10 @@ class App {
         $('#results').hidden = true
         this.message('')
         if (user) {
+            if (new URL(location.href).searchParams.get('return') === 'letterlight') {
+                location.assign('/letterlight/')
+                return
+            }
             const roomId = new URL(location.href).searchParams.get('room')
             this.connection.join(roomId)
         }

@@ -4,6 +4,13 @@ A shared Boggle board for phones, tablets, and computers. Sign in, share a room 
 and play the same round with friends. The server owns the board, deadline, saved
 words, and scores. Reloading or reconnecting restores the current round.
 
+**Letterlight**, available at `/letterlight/`, is a daily five-letter word game.
+Everyone gets the same server-selected puzzle each UTC day and has six guesses.
+Sign in with a Woggle account to save progress across devices. The server validates
+guesses against the MIT-licensed `an-array-of-english-words` list and keeps the
+answer private until the game ends. The daily selection secret is stored in SQLite;
+keep it with your database backups so puzzles remain consistent after a restore.
+
 ## Run locally
 
 Requires Node.js **22.13 or newer** and npm. Tested with Node 22.15 on Windows.

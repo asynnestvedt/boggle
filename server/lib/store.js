@@ -3,6 +3,7 @@
 const { DatabaseSync } = require('node:sqlite')
 const { mkdirSync } = require('node:fs')
 const path = require('node:path')
+const { randomBytes } = require('node:crypto')
 
 class Store {
     constructor(filename) {
@@ -35,7 +36,14 @@ class Store {
                 group_key TEXT NOT NULL, members TEXT NOT NULL, played_at INTEGER NOT NULL,
                 PRIMARY KEY (user_id, group_key)
             ) STRICT;
+            CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT;
+            CREATE TABLE IF NOT EXISTS daily_words (
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                day TEXT NOT NULL, guesses TEXT NOT NULL,
+                PRIMARY KEY (user_id, day)
+            ) STRICT;
         `)
+        this.db.prepare('INSERT OR IGNORE INTO app_settings VALUES (?, ?)').run('letterlight_secret', randomBytes(32).toString('hex'))
     }
     transaction(callback) {
         this.db.exec('BEGIN IMMEDIATE')
@@ -93,6 +101,14 @@ class Store {
     recentGroups(userId) {
         return this.db.prepare('SELECT members, played_at FROM recent_groups WHERE user_id = ? ORDER BY played_at DESC LIMIT 10')
             .all(userId).map(row => ({ members: JSON.parse(row.members), playedAt: row.played_at }))
+    }
+    dailySecret() { return this.db.prepare('SELECT value FROM app_settings WHERE key = ?').get('letterlight_secret').value }
+    dailyGuesses(userId, day) {
+        const row = this.db.prepare('SELECT guesses FROM daily_words WHERE user_id = ? AND day = ?').get(userId, day)
+        return row ? JSON.parse(row.guesses) : []
+    }
+    saveDailyGuesses(userId, day, guesses) {
+        this.db.prepare('INSERT OR REPLACE INTO daily_words VALUES (?, ?, ?)').run(userId, day, JSON.stringify(guesses))
     }
     clean(now) {
         this.db.prepare('DELETE FROM sessions WHERE expires_at <= ?').run(now)

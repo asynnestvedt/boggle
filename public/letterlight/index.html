@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101a19">
+  <title>Letterlight — a little word ritual</title>
+  <meta name="description" content="A daily five-letter word puzzle. Six tries, one bright idea.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/letterlight/style.css">
+  <script src="/letterlight/main.js" type="module"></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="/letterlight/" aria-label="Letterlight home"><span class="brand-mark" aria-hidden="true">✳</span><span>letterlight<span class="brand-dot">.</span></span></a><nav><a href="/">← Woggle</a><button id="help-open" class="icon-button" aria-label="How to play" type="button">?</button></nav></header>
+  <main>
+    <div class="game-heading"><div><p class="eyebrow"><span class="pulse"></span> YOUR DAILY WORD RITUAL</p><h1>A little word.<br><em>A bright idea.</em></h1><p class="intro">One word, six chances. You've got this.</p></div><div class="day-card"><span>DAILY PUZZLE</span><strong id="day-label">—</strong><small>New word at midnight UTC</small></div></div>
+    <div class="game-layout">
+      <section class="play-card" aria-label="Daily puzzle">
+        <div class="card-top"><div><span class="card-kicker">TODAY'S FIVE</span><h2>Find the word</h2></div><span class="attempt-badge" id="attempts">0 / 6 tries</span></div>
+        <div id="board" class="board" role="grid" aria-label="Six guesses of five letters"></div>
+        <p id="message" class="message" role="status" aria-live="polite">Loading today's puzzle…</p>
+        <div id="keyboard" class="keyboard" aria-label="On-screen keyboard"></div>
+        <div id="finished" class="finished" hidden><div><strong id="result-title"></strong><span id="result-detail"></span></div><button id="share" type="button">Copy result ↗</button></div>
+        <div id="signin" class="signin" hidden><strong>Save your streak of bright ideas.</strong><p>Sign in with your Woggle account to play and pick up on any device.</p><a href="/?return=letterlight">Sign in to play <span aria-hidden="true">→</span></a></div>
+      </section>
+      <aside class="guide"><span class="guide-icon" aria-hidden="true">✷</span><p class="eyebrow">A LITTLE GUIDANCE</p><h2>Every guess<br> gets you closer.</h2><p>Enter a five-letter word. The tiles will tell you how close you are.</p><div class="legend"><div><span class="sample correct">L</span><p><strong>Spot on</strong><br>Right letter, right place.</p></div><div><span class="sample present">I</span><p><strong>Almost there</strong><br>Right letter, different place.</p></div><div><span class="sample absent">T</span><p><strong>Not this time</strong><br>Letter isn't in the word.</p></div></div><div class="guide-foot">A fresh puzzle every day <span>✳</span></div></aside>
+    </div>
+    <footer>MADE FOR CURIOUS MINDS <span>✳</span> ONE WORD AT A TIME</footer>
+  </main>
+  <dialog id="help"><div class="dialog-head"><h2>How to play</h2><button id="help-close" type="button" class="icon-button" aria-label="Close help">×</button></div><p>Guess the five-letter word in six tries. Each guess must be a word.</p><p><span class="sample correct">L</span> is in the right spot. <span class="sample present">I</span> is in the word but in another spot. <span class="sample absent">T</span> isn't in the word.</p><p>Letters may appear more than once. A new puzzle arrives every day at midnight UTC, and your progress is saved to your account.</p><button id="help-done" type="button" class="primary">Let's play</button></dialog>
+</body>
+</html>
