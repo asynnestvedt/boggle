@@ -1,0 +1,29 @@
+.header-actions { display:flex; align-items:center; gap:25px }
+.hub-signin,.hub-submit { font:700 .85rem 'DM Sans',sans-serif; cursor:pointer; border:0; border-radius:8px; background:var(--lime); color:#17241b; padding:11px 17px }
+.hub-signin:hover,.hub-submit:hover { background:#e8f7b1 }
+.hub-menu { position:relative }
+.hub-menu summary { display:flex; align-items:center; gap:8px; cursor:pointer; list-style:none; font-size:.85rem; font-weight:700 }
+.hub-menu summary::-webkit-details-marker { display:none }
+.hub-avatar { display:grid; place-items:center; width:34px; height:34px; border-radius:50%; color:#17241b; background:var(--lime) }
+.hub-name { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.hub-popover { position:absolute; right:0; top:45px; z-index:3; width:240px; padding:16px; display:grid; gap:10px; border:1px solid var(--line); border-radius:10px; background:#203129; box-shadow:0 12px 30px #0007; font-size:.85rem }
+.hub-email { color:var(--muted); overflow-wrap:anywhere }
+.hub-popover a,.hub-popover button { color:var(--ink); background:none; border:0; padding:6px 0; font:inherit; text-align:left; cursor:pointer; text-decoration:none }
+.hub-popover p { color:#ffc1a8; margin:0 }
+.hub-dialog { width:min(420px,calc(100% - 36px)); border:1px solid #526b56; border-radius:16px; padding:25px; color:var(--ink); background:#1b2a24; box-shadow:0 20px 70px #0009 }
+.hub-dialog::backdrop { background:#080f0cc9 }
+.dialog-heading { display:flex; align-items:center; justify-content:space-between }
+.dialog-heading h2 { margin:0; font:600 2rem 'Space Grotesk',sans-serif; letter-spacing:-.06em }
+.dialog-heading h2 span { color:var(--lime) }
+.dialog-heading button { border:0; background:none; color:var(--muted); cursor:pointer; font-size:1.8rem }
+.hub-dialog>p { color:var(--muted); font-size:.9rem; margin:10px 0 24px }
+.hub-dialog form,.hub-dialog label { display:grid; gap:8px }
+.hub-dialog form { gap:16px }
+.hub-dialog label { font-size:.8rem; font-weight:700 }
+.hub-dialog input { width:100%; padding:12px; border:1px solid #617361; border-radius:7px; background:#111a18; color:var(--ink); font:inherit }
+.hub-dialog input:focus-visible,.hub-menu summary:focus-visible,.hub-signin:focus-visible { outline:2px solid var(--lime); outline-offset:2px }
+.hub-dialog [role=status] { color:#ffc1a8; margin:0; font-size:.85rem }
+.hub-dialog [role=status]:empty { display:none }
+.hub-submit:disabled { opacity:.65; cursor:wait }
+.hub-links { display:flex; justify-content:space-between; gap:12px; margin-top:20px; font-size:.8rem; color:var(--lime) }
+@media(max-width:700px) { .header-note { display:none } .header-actions { gap:10px } .hub-name { max-width:85px } }

@@ -7,6 +7,12 @@ export class Account {
         this.menu = document.getElementById('account-menu')
         this.user = null
         this.mode = 'login'
+        const url = new URL(location.href)
+        if (['register', 'forgot', 'change'].includes(url.searchParams.get('account'))) {
+            this.mode = url.searchParams.get('account')
+            url.searchParams.delete('account')
+            history.replaceState(null, '', url.pathname + url.search + url.hash)
+        }
         this.readResetLink()
         window.addEventListener('hashchange', () => {
             if (!this.readResetLink()) return

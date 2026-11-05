@@ -1,0 +1,7 @@
+woggle.likedonkeykong.com {
+    reverse_proxy 127.0.0.1:3000
+}
+
+likedonkeykong.com, www.likedonkeykong.com {
+    redir https://woggle.likedonkeykong.com{uri} permanent
+}

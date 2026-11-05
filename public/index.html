@@ -10,10 +10,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/hub/style.css">
+  <link rel="stylesheet" href="/hub/account.css">
   <script src="/hub/main.js" type="module"></script>
 </head>
 <body>
-  <header class="header"><a href="/" class="brand"><span aria-hidden="true" class="brand-icon">✳</span><span>word arcade<span class="brand-dot">.</span></span></a><span class="header-note"><span aria-hidden="true">✦</span> GOOD WORDS, GOOD COMPANY</span></header>
+  <header class="header"><a href="/" class="brand"><span aria-hidden="true" class="brand-icon">✳</span><span>word arcade<span class="brand-dot">.</span></span></a><div class="header-actions"><span class="header-note"><span aria-hidden="true">✦</span> GOOD WORDS, GOOD COMPANY</span><div id="hub-account"><button class="hub-signin" type="button" id="hub-sign-in">Sign in</button></div></div></header>
+  <dialog class="hub-dialog" id="account-dialog" aria-labelledby="account-title">
+    <div class="dialog-heading"><h2 id="account-title">Welcome back<span>.</span></h2><button type="button" id="account-close" aria-label="Close">×</button></div>
+    <p>Sign in to play with your people.</p>
+    <form id="hub-login"><label>Email<input name="email" type="email" autocomplete="email" maxlength="254" required></label><label>Password<input name="password" type="password" autocomplete="current-password" maxlength="128" required></label><p id="hub-login-status" role="status" aria-live="polite"></p><button class="hub-submit" type="submit">Sign in</button></form>
+    <div class="hub-links"><a href="/woggle/?account=register">Create account</a><a href="/woggle/?account=forgot">Forgot password?</a></div>
+  </dialog>
   <main>
     <section class="intro" aria-labelledby="heading"><div><p class="eyebrow"><span class="spark"></span> A LITTLE PLACE TO PLAY</p><h1>Words are better<br><em>when you play.</em></h1><p class="subtitle">Make a little time for a word game. Play together, or find a quiet moment just for you.</p></div><div class="intro-mark" aria-hidden="true"><span>✳</span><small>THE<br>WORD<br>ARCADE</small></div></section>
     <section class="collection" aria-labelledby="games-heading"><div class="section-heading"><div><p class="eyebrow">THE COLLECTION</p><h2 id="games-heading">Pick your game<span>.</span></h2></div><p>Two ways to play <span aria-hidden="true">↘</span></p></div>

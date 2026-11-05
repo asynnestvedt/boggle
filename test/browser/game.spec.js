@@ -66,6 +66,30 @@ test('games hub opens both games and preserves old room and reset links', async 
     await expect(page.locator('#signin')).toBeVisible()
 })
 
+test('hub sign-in shares the game session and offers account recovery', async ({ page, game }) => {
+    await register(page, game.url, 'Hub Player', 'hub@browser.test')
+    await page.goto(game.url)
+    await expect(page.locator('.hub-menu summary')).toContainText('Hub Player')
+    await page.locator('.hub-menu summary').click()
+    await page.getByRole('button', { name: 'Sign out' }).click()
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await page.getByLabel('Email', { exact: true }).fill('hub@browser.test')
+    await page.getByLabel('Password', { exact: true }).fill('wrong password')
+    await page.locator('#hub-login').getByRole('button', { name: 'Sign in' }).click()
+    await expect(page.locator('#hub-login-status')).not.toBeEmpty()
+    await page.getByLabel('Password', { exact: true }).fill('browser password 1234')
+    await page.locator('#hub-login').getByRole('button', { name: 'Sign in' }).click()
+    await expect(page.locator('.hub-menu summary')).toContainText('Hub Player')
+    await page.getByRole('link', { name: 'Play Woggle' }).click()
+    await expect(page.locator('#connection-status')).toHaveText('Connected')
+    await page.goto(game.url)
+    await page.locator('.hub-menu summary').click()
+    await page.getByRole('button', { name: 'Sign out' }).click()
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await page.getByRole('link', { name: 'Forgot password?' }).click()
+    await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible()
+})
+
 test('typing a display name keeps the signup form responsive', async ({ page, game }) => {
     const errors = []
     let crashed = false
@@ -261,3 +285,4 @@ test('Letterlight supports keyboard play and restores daily progress', async ({ 
     await page.screenshot({ path: info.outputPath('letterlight-mobile.png'), fullPage: true })
     await expect(page.getByRole('button', { name: 'How to play' })).toBeVisible()
 })
+
