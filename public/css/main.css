@@ -166,7 +166,7 @@ body {
     font: 16px/26px 'Open Sans', Helvetica, Helvetica Neue, Arial;
     text-align: center;
     color: white;
-    max-height: 100px !important;
+    min-height: 100vh;
     overflow: hidden;
     overflow-y: scroll;
     scrollbar-width: none;
@@ -287,7 +287,7 @@ footer h3 {
     background: rgb(211, 210, 210);
 }
 
-div.selected {
+.die.selected {
     background: blanchedalmond;
     color: royalblue;
 }
@@ -334,7 +334,7 @@ div.selected {
 /**
  * 4x4
  */
-.four-by-four div {
+.four-by-four .die {
     display: inline-block;
     width: 23%;
     padding-bottom: 23%;
@@ -369,7 +369,7 @@ div.selected {
 /**
  * 5x5
  */
-.five-by-five div {
+.five-by-five .die {
     display: inline-block;
     width: 18%;
     padding-bottom: 18%;
@@ -650,11 +650,11 @@ div.selected {
         font-size: 2rem;
     }
 
-    .four-by-four div.die {
+    .four-by-four .die {
         width: 159px;
     }
 
-    .five-by-five div.die {
+    .five-by-five .die {
         width: 124px;
     }
 

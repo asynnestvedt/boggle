@@ -1,580 +1,304 @@
-'use strict'
+import { Account } from './components/account.js'
+import { RoomConnection } from './lib/room-connection.js'
+import { api } from './lib/http.js'
+import { VoiceChat } from './components/voice.js'
 
-import { ApiGet, ApiPost } from './lib/api.js'
-import { Timer, ProgressBar } from './progress.js'
+const $ = selector => document.querySelector(selector)
 
-/**
- * App class organizes and controls components and data and high level UI state.
- */
-export default class App {
+class App {
     constructor() {
-
-        // window.addEventListener('hashchange', this.handleRoute.bind(this))
-
-        this.data = {
-            /**
-             * els contains refs to UI nodes not managed by other classes 
-             */
-            els: {
-                controls: document.getElementById('bggl-ctr-tray'),
-                replayBtn: document.getElementById('bggl-replay'),
-                solution: document.getElementById('bggl-solution'),
-                header: document.querySelector('.header-container'),
-                footer: document.querySelector('.footer-container'),
-                users: document.getElementById('bggl-people'),
-                rightpullout: document.querySelector('x-rightpullout')
+        this.state = null
+        this.connected = false
+        this.path = []
+        this.pendingWord = null
+        this.connection = new RoomConnection({
+            onState: state => this.receive(state),
+            onStatus: (text, connected) => {
+                if (connected && !this.connected) this.message('')
+                this.connected = connected
+                if (!connected && (this.voice?.active || this.voice?.joining)) this.voice.stop()
+                $('#connection-status').textContent = text
+                $('#connection-dot').classList.toggle('online', connected)
+                $('#bggl-people').setAttribute('aria-label', `Room and players, ${text.toLowerCase()}`)
+                if (!connected) this.pendingWord = null
+                this.renderControls()
             },
-            /**
-             * boggle board initialized during game start
-             */
-            board: null,
-            /**
-             * SETTINGS
-             */
-            settings: new Settings(function () {
-                this.requestgame()
-            }.bind(this)),
-            roomSettings: document.querySelector('X-RoomSettings'),
-            /**
-             * GAME SOUNDS
-             */
-            sounds: {
-                shake: new Audio('assets/dice-shake.mp3'),
-                countdown: new Audio('assets/jeopardy-countdown.mp3')
-            },
-            /**
-             * SETTINGS
-             */
-            timer: new Timer({
-                bars: [
-                    document.getElementById('pbarxinv'),
-
-                    // document.getElementById('pbarx'),
-                    // document.getElementById('pbarxinv'),
-                    // document.getElementById('pbary'),
-                    // document.getElementById('pbaryinv'),
-                ],
-                orientations: [
-                    ProgressBar.orient.X,
-                    // ProgressBar.orient.XINV,
-                    // ProgressBar.orient.Y,
-                    // ProgressBar.orient.YINV,
-                ]
-            })
-        }
-
-        /**
-         * Set bindings
-         */
-        this.data.screenMgr = new ScreenManager(document.getElementById('bggl-fullscr'), {
-            onfull: function () {
-                this.data.els.footer.style.display = 'none'
-            }.bind(this),
-            onnormal: function () {
-                this.data.els.footer.style.display = 'block'
-            }
+            onError: message => { if (message.startsWith('Voice chat is full')) this.voice.stop(message); this.pendingWord = null; this.message(message); this.renderControls() },
+            onExpired: () => this.account.signedOut('Your session ended. Please sign in again.'),
+            onLeft: () => this.leftRoom()
         })
-
-        /**
-         * Set bindings
-         */
-        this.init()
-    }
-
-    init() {
-        this.data.els.replayBtn.addEventListener('click', function (evt) {
-            evt.preventDefault()
-            if (this.data.board) {
-                this.data.board.clear()
-                this.data.board.hide()
+        this.voice = new VoiceChat(this.connection)
+        this.account = new Account($('#account'), user => this.setUser(user))
+        $('#settings form').onsubmit = event => {
+            event.preventDefault()
+            if (!this.state || !this.connected) return
+            const fields = Object.fromEntries(new FormData(event.target))
+            if (!this.connection.send('startRound', { ...fields, duration: Number(fields.duration), version: this.state.version })) {
+                this.message('Wait for the room to reconnect.')
             }
-            this.data.settings.show()
-            this.data.timer.stop()
-        }.bind(this))
-
-        this.data.els.users.onclick = () => {
-            this.data.roomSettings.toggle()
         }
+        $('#bggl-save-word').onclick = () => this.saveWord()
+        $('#claim-host').onclick = () => this.connection.send('claimHost', {})
+        $('#new-room').onclick = () => this.newRoom()
+        $('#leave-room').onclick = () => {
+            if (!this.connection.send('leaveRoom', {})) this.message('Reconnect before leaving the room, or create a new room.')
+        }
+        const toggleRoom = () => this.showRoom($('#room-panel').hidden)
+        $('#bggl-people').onclick = toggleRoom
+        $('#close-room').onclick = () => this.showRoom(false)
+        $('#bggl-copy-room').onclick = async () => {
+            try { await navigator.clipboard.writeText($('#roomid').value); this.message('Room link copied.') }
+            catch { $('#roomid').select(); this.message('Select and copy the room link.') }
+        }
+        $('#bggl-fullscr').onclick = () => {
+            const result = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.()
+            result?.catch(() => this.message('Fullscreen is unavailable in this browser.'))
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) this.connection.send('sync', {})
+        })
+        setInterval(() => this.renderClock(), 100)
+        this.account.init()
     }
-
-
-
-    /**
-     * requests solution from server
-     */
-    requestgame() {
-        /** ask server for dice */
-        new ApiGet(`/api/board/${this.data.settings.dimensions}?orientation=${this.data.settings.orientation}`, function (response) {
-            if (response) {
-                if(! this.data.roomSettings.sendMessage('startgame', {                    
-                    dice: response.data,
-                    duration: this.data.settings.duration,
-                    text: `${this.name} started a new multiplayer Woggle game`,
-
-                }) ) {
-                    /** single player game */
-                    this.startgame({dice: response.data, duration: this.data.settings.duration})
+    message(text) { $('#game-message').textContent = text }
+    showRoom(show) {
+        $('#room-panel').hidden = !show
+        $('#bggl-people').setAttribute('aria-expanded', String(show))
+        if (show && this.user) this.loadRecentGroups()
+    }
+    async loadRecentGroups() {
+        const list = $('#recent-groups-list')
+        try {
+            const { groups } = await api('/api/recent-groups')
+            if (!groups.length) { list.textContent = 'No recent groups yet.'; return }
+            list.replaceChildren(...groups.map(group => {
+                const row = document.createElement('div')
+                row.className = 'recent-group'
+                const names = document.createElement('span')
+                names.textContent = group.members.filter(member => member.id !== this.user.id).map(member => member.name).join(', ')
+                const copy = document.createElement('button')
+                copy.type = 'button'
+                copy.textContent = 'Copy invite'
+                copy.setAttribute('aria-label', `Copy invite for ${names.textContent}`)
+                copy.disabled = !this.connected
+                copy.onclick = async () => {
+                    try { await navigator.clipboard.writeText($('#roomid').value); this.message(`Invite link copied for ${names.textContent}. Share it with them.`) }
+                    catch { $('#roomid').select(); this.message('Select and copy the room link to share.') }
                 }
-                
-            }
-        }.bind(this))
+                row.append(names, copy)
+                return row
+            }))
+        } catch { list.textContent = 'Recent groups are unavailable right now.' }
     }
-
-
-    startgame(data) {
-        document.querySelector('x-rightpullout').hide()
-        document.querySelector('x-roomsettings').hide()
-        this.data.settings.hide()
-        
-        /** create new board - assume square */
-        const dimen = Math.sqrt(data.dice.length)
-        this.data.board = new BoggleBoard('board', dimen, dimen)
-        this.data.board.show()
-        /** clear and hide last games answers */
-        this.data.els.rightpullout.clear()
-        this.data.els.rightpullout.clear()
-        /** render board with dice */
-        this.data.board.render(data.dice)
-        /** play dice shake sound */
-        this.data.sounds.shake.play()
-        /** start the timer */
-        this.data.timer.stop()
-        this.data.timer.start({
-            duration: data.duration,
-            interval: 0.1,
-            done: function () {
-                this.gameover()
-            }.bind(this)
+    setUser(user) {
+        this.voice.stop('Voice chat is off.')
+        this.connection.stop()
+        this.user = user
+        this.state = null
+        this.clearClock()
+        this.connected = false
+        this.path = []
+        this.pendingWord = null
+        $('#my-words').textContent = ''
+        $('#game').hidden = !user
+        $('#board').style.display = 'none'
+        $('#results').hidden = true
+        this.message('')
+        if (user) {
+            const roomId = new URL(location.href).searchParams.get('room')
+            this.connection.join(roomId)
+        }
+    }
+    async newRoom() {
+        this.voice.stop('Voice chat is off.')
+        const button = $('#new-room')
+        button.disabled = true
+        // Explicitly leave so another member can become host of the previous room.
+        if (this.connected) this.connection.send('leaveRoom', {})
+        this.connected = false
+        this.state = null
+        this.clearClock()
+        this.path = []
+        this.pendingWord = null
+        $('#my-words').textContent = ''
+        $('#board').style.display = 'none'
+        $('#results').hidden = true
+        this.message('')
+        await this.connection.join(null)
+        button.disabled = false
+    }
+    leftRoom() {
+        this.voice.stop('Voice chat is off.')
+        this.connection.stop()
+        this.state = null
+        this.clearClock()
+        this.connected = false
+        this.path = []
+        this.pendingWord = null
+        $('#my-words').textContent = ''
+        $('#board').style.display = 'none'
+        $('#results').hidden = true
+        $('#connection-status').textContent = 'You left the room.'
+        $('#bggl-people-count').textContent = ''
+        $('#roster').replaceChildren()
+        $('#roomid').value = ''
+        const url = new URL(location.href)
+        url.searchParams.delete('room')
+        history.replaceState(null, '', url)
+        this.renderControls()
+    }
+    receive(state) {
+        if (this.state?.id === state.id && this.state.version > state.version) return
+        const hadState = Boolean(this.state)
+        const isNewRound = this.state?.round?.id !== state.round?.id || this.state?.id !== state.id
+        this.state = state
+        this.receivedAt = performance.now()
+        $('#roomid').value = location.href
+        $('#bggl-people-count').textContent = state.members.filter(member => member.online).length
+        $('#roster').replaceChildren(...state.members.map(member => {
+            const item = document.createElement('li')
+            item.textContent = `${member.name}${member.id === state.hostId ? ' (host)' : ''}${member.online ? '' : ' · offline'}`
+            return item
+        }))
+        if (!$('#room-panel').hidden) this.loadRecentGroups()
+        if (state.round) {
+            if (isNewRound) {
+                this.path = []
+                this.pendingWord = null
+                this.message('')
+                this.renderBoard()
+                if (state.round.status === 'playing') {
+                    this.showRoom(false)
+                    if (hadState) new Audio('/assets/dice-shake.mp3').play().catch(() => {})
+                }
+            }
+            if (this.pendingWord && state.round.myWords.some(entry => entry.word === this.pendingWord)) {
+                this.message(`Saved ${this.pendingWord}.`)
+                this.pendingWord = null
+                this.path = []
+            }
+            $('#my-words').textContent = `Your saved words (${state.round.myWords.length}): ${state.round.myWords.map(entry => entry.word).sort().join(', ')}`
+            this.renderResults()
+        }
+        this.renderControls()
+        this.renderClock()
+    }
+    remaining() {
+        if (!this.state?.round) return 0
+        return Math.max(0, this.state.round.endsAt - this.state.serverNow - (performance.now() - this.receivedAt))
+    }
+    canPlay() { return this.connected && this.state?.round?.status === 'playing' && this.remaining() > 0 }
+    renderControls() {
+        const round = this.state?.round
+        const host = this.state && this.user?.id === this.state.hostId
+        $('#settings').hidden = !host || round?.status === 'playing'
+        $('#settings button').disabled = !this.connected
+        $('#host-message').hidden = !this.state || host || round?.status === 'playing'
+        $('#claim-host').hidden = !this.state || host || !this.connected || round?.status === 'playing' ||
+            this.state.members.some(member => member.id === this.state.hostId && member.online)
+        $('#leave-room').disabled = !this.connected
+        $('#score-list').querySelectorAll('button').forEach(button => { button.disabled = !this.connected })
+        const canPlay = this.canPlay()
+        $('#board').classList.toggle('disabled', !canPlay)
+        $('#board').querySelectorAll('.die').forEach((die, position) => {
+            die.classList.toggle('selected', this.path.includes(position))
+            die.disabled = !canPlay || Boolean(this.pendingWord)
         })
-
-        try {
-            navigator.wakeLock.request('display')
-        } catch(e) {
-            console.log('could not disable display sleep')
-        }
-        
-
-        /** add midway timer for countdown music */
-        // this.data.timer.at(data.duration - 31, function () {
-        //     this.data.sounds.countdown.play()
-        // }.bind(this))
+        const word = this.path.map(position => round.dice[position].selected).join('').toUpperCase()
+        const save = $('#bggl-save-word')
+        save.hidden = !canPlay || word.length < 3
+        save.disabled = Boolean(this.pendingWord)
+        save.textContent = this.pendingWord ? 'Saving…' : `Save ${word}`
     }
-
-    /**
-     * requests solution from server
-     */
-    reqSolution() {
-        let diceStr = this.data.board.dice.map(function (die) {
-            return die.selected
-        }).join('')
-        new ApiPost('/api/solve', { letters: diceStr }, function (response) {
-            if (response) {
-                this.data.solution = JSON.parse(response.data)
-                console.log(this.data.solution)
+    renderClock() {
+        const round = this.state?.round
+        if (!round) return
+        const remaining = round.status === 'finished' ? 0 : this.remaining()
+        const seconds = Math.ceil(remaining / 1000)
+        $('#round-clock').textContent = round.status === 'finished' ? 'Round finished' :
+            `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}${remaining === 0 ? ' · waiting for server' : ''}`
+        $('#pbarxinv').style.display = round.status === 'playing' ? 'block' : 'none'
+        $('#pbarxinv .progress-inner').style.width = `${remaining / (round.duration * 1000) * 100}%`
+        if (!remaining && round.status === 'playing' && this.deadlineSync !== round.id) {
+            this.deadlineSync = round.id
+            this.connection.send('sync', {})
+        }
+        if (!remaining) this.renderControls()
+    }
+    clearClock() {
+        $('#round-clock').textContent = ''
+        $('#pbarxinv').style.display = 'none'
+    }
+    renderBoard() {
+        const round = this.state.round
+        const board = $('#board')
+        board.className = `board soft-corners ${round.width === 4 ? 'four-by-four' : 'five-by-five'}`
+        board.style.display = 'grid'
+        board.replaceChildren(...round.dice.map((die, position) => {
+            const tile = document.createElement('button')
+            tile.type = 'button'
+            tile.className = 'die'
+            tile.setAttribute('aria-label', `${die.selected}, row ${Math.floor(position / round.width) + 1}, column ${position % round.width + 1}`)
+            const letters = document.createElement('span')
+            letters.className = `letters r${die.orientation}${['M', 'W'].includes(die.selected) ? ' underline' : ''}`
+            letters.textContent = die.selected
+            tile.append(letters)
+            tile.onclick = () => this.select(position)
+            return tile
+        }))
+    }
+    select(position) {
+        if (!this.canPlay() || this.pendingWord) return
+        const previous = this.path.at(-1)
+        const width = this.state.round.width
+        if (this.path.includes(position)) this.path = []
+        else if (previous === undefined || (Math.abs(previous % width - position % width) <= 1 &&
+            Math.abs(Math.floor(previous / width) - Math.floor(position / width)) <= 1)) this.path.push(position)
+        else this.path = [position]
+        this.renderControls()
+    }
+    saveWord() {
+        if (!this.canPlay() || this.pendingWord) return
+        const word = this.path.map(position => this.state.round.dice[position].selected).join('').toUpperCase()
+        if (word.length < 3) return
+        this.pendingWord = word
+        if (!this.connection.send('submitWord', { roundId: this.state.round.id, path: this.path.slice() })) {
+            this.pendingWord = null
+            this.message('Wait for the room to reconnect, then submit again.')
+        }
+        this.renderControls()
+    }
+    renderResults() {
+        const round = this.state.round
+        $('#results').hidden = round.status !== 'finished'
+        if (round.status !== 'finished') return
+        const opened = new Set([...$('#score-list').querySelectorAll('details[open]')].map(element => element.dataset.player))
+        $('#score-list').replaceChildren(...round.results.slice().sort((a, b) => b.score - a.score).map(player => {
+            const item = document.createElement('details')
+            item.dataset.player = player.id
+            item.open = player.id === this.user.id || opened.has(player.id)
+            const summary = document.createElement('summary')
+            summary.textContent = `${player.name}: ${player.score} points · ${player.words.length} words`
+            const words = document.createElement('div')
+            words.className = 'review-words'
+            if (!player.words.length) words.textContent = 'No saved words.'
+            for (const entry of player.words.slice().sort((a, b) => a.word.localeCompare(b.word))) {
+                const word = document.createElement(player.id === this.user.id ? 'button' : 'span')
+                word.textContent = `${entry.word} (${entry.points})`
+                word.classList.toggle('excluded', Boolean(entry.excluded))
+                if (player.id === this.user.id) {
+                    word.type = 'button'
+                    word.setAttribute('aria-pressed', String(Boolean(entry.excluded)))
+                    word.setAttribute('aria-label', `${entry.excluded ? 'Restore' : 'Exclude'} ${entry.word} (${entry.points} points)`)
+                    word.disabled = !this.connected
+                    word.onclick = () => this.connection.send('reviewWord', { roundId: round.id, word: entry.word, excluded: !entry.excluded })
+                }
+                words.append(word)
             }
-        }.bind(this))
-    }
-
-    /**
-     * called after timer runs down
-     */
-    gameover() {
-        try {
-            navigator.wakeLock.release('display')
-        } catch(e) {
-            console.log('could not re-enable display sleep')
-        }
-
-        const savedWords = this.data.board.wordlist
-        console.log(savedWords)
-        this.data.board.disable()
-
-        if (savedWords) {
-            document.querySelector('x-rightpullout').show(savedWords)
-        }
-        
-    }
-
-}
-
-
-class Settings {
-    constructor(callback) {
-        this.els = {
-            root: document.getElementById('settings'),
-            inputs: document.querySelectorAll('#settings input'),
-            button: document.querySelector('#settings button')
-        }
-
-        /** defaults */
-        this.players = 2
-        this.dimensions = '5x5'
-        this.duration = 180
-        this.orientation = 'random'
-        this.callback = callback || this.defaultHandler
-
-        /** bind events */
-        this.init()
-    }
-
-    defaultHandler(evt) {
-        let action = '', value = ''
-        try {
-            action = evt.srcElement.getAttribute('data-action')
-            value = evt.srcElement.value
-        } catch (e) {
-            console.log(e)
-        }
-
-        switch (action) {
-            case 'players':
-                this.players = parseInt(value)
-                break
-            case 'boardsize':
-                this.dimensions = value
-                break
-            case 'duration':
-                this.duration = parseInt(value)
-                break
-            case 'orientation':
-                this.orientation = value
-        }
-
-        console.log(evt)
-        return false
-    }
-
-    hide() {
-        if( ! this.els.root.classList.contains('hidden')) {
-            this.els.root.classList.add('hidden')
-        }
-    }
-
-    show() {
-        if(this.els.root.classList.contains('hidden')) {
-            this.els.root.classList.remove('hidden')
-        }
-    }
-
-    init() {
-        for (let key in this.els.inputs) {
-            if (this.els.inputs.hasOwnProperty(key)) {
-                this.els.inputs[key].addEventListener('change', this.defaultHandler.bind(this))
-            }
-        }
-
-        this.els.button.addEventListener('click', function (evt) {
-            evt.preventDefault()
-            this.hide()
-            this.callback()
-        }.bind(this))
+            item.append(summary, words)
+            return item
+        }))
     }
 }
-
-class BoggleBoard {
-    constructor(el, width, height) {
-        this.el = document.getElementById(el)
-        this.saveWordButton = document.getElementById('bggl-save-word')
-        this.width = width || 4
-        this.height = height || 4
-        this.dice = []
-        this.lastSelectedDie = null
-        this.selectedWord = []
-        this.selectedPositions = []
-        this._wordlist = new Set()
-        this.disabled = false
-
-        this.saveWordButton.onclick = this.saveWord.bind(this)
-        this.el.onclick = this.dieClick.bind(this)
-        this.disable(false)
-    }
-
-    get wordlist() {
-        return Array.from(this._wordlist).sort()
-    }
-
-    disable(d) {
-        if (d === undefined) {
-            d = true
-        }
-        this.disabled = d
-        if (this.disabled) {
-            this.clearSelection()
-            this.el.classList.add('disabled')
-        } else {
-            this.el.classList.remove('disabled')
-        }
-    }
-
-    hide() {
-        this.el.style.display = 'none'
-    }
-
-    show() {
-        this.el.style.display = 'block'
-    }
-
-    clear() {
-        this.el.innerHTML = ''
-    }
-
-    render(dice) {
-        this.dice = dice
-        this.el.textContent = ''
-
-        if (this.width === 4 && this.height === 4) {
-            this.el.classList.remove('five-by-five')
-            this.el.classList.add('four-by-four')
-        } else {
-            this.el.classList.remove('four-by-four')
-            this.el.classList.add('five-by-five')
-        }
-
-        for (let i = 0; i < dice.length; ++i) {
-            let div = document.createElement('div')
-            let span = document.createElement('span')
-
-            span.innerText = dice[i].selected
-            if (dice[i].selected === 'M' || dice[i].selected === 'W') {
-                span.setAttribute('class', 'underline letters r' + dice[i].orientation)
-            } else {
-                span.setAttribute('class', 'letters r' + dice[i].orientation)
-            }
-
-            div.setAttribute('class', 'die')
-            div.setAttribute('data-letter', dice[i].selected)
-            div.setAttribute('data-pos', i+1)
-            div.appendChild(span)
-
-            this.el.appendChild(div)
-        }
-    }
-
-    dieClick(ev) {
-        if (this.disabled) {
-            return
-        }
-
-        let el
-        if (ev.target.tagName === 'SPAN' && ev.target.classList.contains('letters') ) {
-            el = ev.target.parentNode;
-        } else if ( ev.target.tagName === 'DIV' && ev.target.classList.contains('die') ) {
-            el = ev.target
-        } else {
-            return
-        }
-
-        if (el.classList.contains('selected')) {
-            el.classList.remove('selected')
-        } else {
-            el.classList.add('selected')
-        }
-
-        console.log(el.dataset.pos)
-
-        if( this.selectedPositions.includes(parseInt(el.dataset.pos)) ) {
-            this.clearSelection()
-        } else if (this.lastSelectedDie === null || allowableMove(this.width, this.lastSelectedDie, el.dataset.pos)) {
-            this.doMove(el)
-        } else {
-            this.clearSelection()
-        }
-
-        this.renderSaveWordButton()
-    }
-
-    renderSaveWordButton() {
-        if  (this.selectedWord.length >= 3) {
-            this.saveWordButton.classList.remove('hidden')
-        } else if (! this.saveWordButton.classList.contains('hidden')) {
-            this.saveWordButton.classList.add('hidden')
-        }
-    }
-
-    doMove(el) {
-        this.selectedWord.push(el.dataset.letter)
-        this.selectedPositions.push(parseInt(el.dataset.pos))
-        this.lastSelectedDie = el.dataset.pos
-    }
-
-    clearSelection() {
-        this.el.querySelectorAll('div.die').forEach(e => e.classList.remove('selected'))
-        this.selectedWord = []
-        this.selectedPositions = []
-        this.lastSelectedDie = null
-        this.renderSaveWordButton()
-    }
-
-    saveWord(ev) {
-        ev.preventDefault()
-        this._wordlist.add(this.selectedWord.join(''))
-        this.clearSelection()
-    }
-
-}
-
-
-function allowableMove(width, currentPos, nextPos) {
-    const validMap = {
-        4: {
-            1: [2,5,6],
-            2: [1,3,5,6,7],
-            3: [2,4,6,7,8],
-            4: [3,7,8],
-            5: [1,2,6,9,10],
-            6: [1,2,3,5,7,9,10,11],
-            7: [2,3,4,6,8,10,11,12],
-            8: [3,4,7,11,12],
-            9: [5,6,10,13,14],
-            10: [5,6,7,9,11,13,14,15],
-            11: [6,7,8,10,12,14,15,16],
-            12: [7,8,11,15,16],
-            13: [9,10,14],
-            14: [9,10,11,13,15],
-            15: [10,11,12,14,16],
-            16: [11,12,15]
-        },
-
-        5: {
-            1: [2,6,7],
-            2: [1,3,6,7,8],
-            3: [2,4,7,8,9],
-            4: [3,5,8,9,10],
-            5: [4,9,10],
-            6: [1,2,7,11,12],
-            7: [1,2,3,6,8,11,12,13],
-            8: [2,3,4,7,9,12,13,14],
-            9: [3,4,5,8,10,13,14,15],
-            10: [4,5,9,14,15],
-            11: [6,7,12,16,17],
-            12: [6,7,8,11,13,16,17,18],
-            13: [7,8,9,12,14,17,18,19],
-            14: [8,9,10,13,15,18,19,20],
-            15: [9,10,14,19,20],
-            16: [11,12,17,21,22],
-            17: [11,12,13,16,18,21,22,23],
-            18: [12,13,14,17,19,22,23,24],
-            19: [13,14,15,18,20,23,24,25],
-            20: [14,15,19,24,25],
-            21: [16,17,22],
-            22: [16,17,18,21,23],
-            23: [17,18,19,22,24],
-            24: [18,19,20,23,25],
-            25: [19,20,24],
-        }
-    }
-
-    return validMap[parseInt(width)][parseInt(currentPos)].includes(parseInt(nextPos))
-}
-
-class ScreenManager {
-    constructor(el, options) {
-        if (!el) return false
-
-        options = options || {}
-
-        this.el = el
-        this.cbs = {
-            onfull: options.onfull || function () { },
-            onnormal: options.onnormal || function () { }
-        }
-        this.init()
-        if (options.doToggle) {
-            this.toggleFullScreen()
-        }
-    }
-
-    init() {
-        this.bindEsc()
-        this.bindClick()
-        this.render()
-    }
-
-    bindClick() {
-        this.el.onclick = function () {
-            this.toggleFullScreen()
-        }.bind(this)
-    }
-
-    bindEsc() {
-        document.addEventListener('keydown', function (e) {
-            if (e.keyCode == 27) {
-                this.exitFS()
-            }
-        }.bind(this), false)
-    }
-
-    toggleFullScreen() {
-        if ((document.fullScreenElement && document.fullScreenElement !== null) ||    // alternative standard method
-            (!document.mozFullScreen && !document.webkitIsFullScreen)) {               // current working methods
-            if (document.documentElement.requestFullScreen) {
-                document.documentElement.requestFullScreen()
-            } else if (document.documentElement.mozRequestFullScreen) {
-                document.documentElement.mozRequestFullScreen()
-            } else if (document.documentElement.webkitRequestFullScreen) {
-                document.documentElement.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT)
-            }
-            this.render(true)
-            this.cbs.onfull()
-        } else {
-            this.exitFS()
-            this.render()
-            this.cbs.onnormal()
-        }
-    }
-
-    exitFS() {
-        if (document.cancelFullScreen) {
-            document.cancelFullScreen()
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen()
-        } else if (document.webkitCancelFullScreen) {
-            document.webkitCancelFullScreen()
-        }
-    }
-
-    render(fullBool) {
-        if (!fullBool) {
-            this.el.innerHTML = '<i class="material-icons">fullscreen</i>'
-        } else {
-            this.el.innerHTML = '<i class="material-icons">fullscreen_exit</i>'
-        }
-    }
-}
-
-
-/* id generation for templating */
-window.idcount = 0
-window.makeid = (prefix) => `${prefix || 'gen'}${window.idcount++}`
-
-
-export class ShadowComponent extends HTMLElement {
-    constructor(id) {
-        super()
-        const name = this.constructor.name.toLowerCase()
-        this.id = id || window.makeid(name)
-        this.attachShadow({ mode: 'open' })
-        this.__template = document.createElement('template')
-        this.__template.innerHTML = this.__proto__.constructor.template()
-        this.shadowRoot.appendChild(this.__template.content.cloneNode(true))
-        this.__cache = null
-        this.__initialized = false
-    }
-}
-
-export class Component extends HTMLElement {
-    constructor(id) {
-        super()
-        const name = this.constructor.name.toLowerCase()
-        this.id = id || window.makeid(name)
-        this.__template = document.createElement('template')
-        /** access static method template */
-        this.__template.innerHTML = this.__proto__.constructor.template()
-        this.appendChild(this.__template.content.cloneNode(true))
-        this.__cache = null
-        this.__initialized = false
-    }
-}
-
 
 window.app = new App()

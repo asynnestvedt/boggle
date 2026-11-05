@@ -18,7 +18,7 @@ class BoggleGame {
     /**
      * returns a new array of randomized dice
      */
-    static get dice() {
+    static dice(width = 4) {
         /** Boggle Standard Dice Set - Classic*/
         const standard = [
             ['A', 'A', 'C', 'I', 'O', 'T'],
@@ -89,11 +89,16 @@ class BoggleGame {
         ];
 
         let diceSet = standardNew
-        if (this.width === 5) {
+        if (width === 5) {
             diceSet = bigboggle
         }
 
-        return diceSet.slice().sort(function () { return 0.5 - Math.random() })
+        const shuffled = diceSet.slice()
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1))
+            ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
+        return shuffled
     }
 
     /**
@@ -101,7 +106,7 @@ class BoggleGame {
      * @param {callback} cb - fired when game timer expires
      */
     start(cb) {
-        setTimeout(cb, this.duration);
+        return setTimeout(cb, this.duration * 1000);
     }
 }
 
@@ -115,16 +120,17 @@ class BoggleBoard {
      * @param {number} [height=4] height - height of board in units of dice
      */
     constructor(width, height) {
-        this.width = width || 4;
-        this.height = height || width || 4;
+        this.width = Number(width || 4);
+        this.height = Number(height || width || 4);
+        if (![4, 5].includes(this.width) || this.width !== this.height) throw new RangeError('Supported boards are 4x4 and 5x5.');
         this.dice = [];
 
         let diceNeeded = this.width * this.height;
-        let rndDice = BoggleGame.dice;
+        let rndDice = BoggleGame.dice(this.width);
 
         /** dice are removed from the pool as they are rolled to prevent dupes */
         while (this.dice.length < diceNeeded) {
-            if (rndDice.length < 1) { rndDice = BoggleGame.dice; } /** get a new pool of dice as needed */
+            if (rndDice.length < 1) { rndDice = BoggleGame.dice(this.width); }
             this.dice.push(new BoggleDie(rndDice.pop()));
         }
     }
@@ -140,8 +146,8 @@ class BoggleDie {
      */
     constructor(letters) {
         this.letters = letters;
-        this.selected = this.letters[Math.round(Math.random() * 5)];
-        this.orientation = [0, 90, 180, 270][Math.round(Math.random() * 3)];
+        this.selected = this.letters[Math.floor(Math.random() * 6)];
+        this.orientation = [0, 90, 180, 270][Math.floor(Math.random() * 4)];
     }
 }
 

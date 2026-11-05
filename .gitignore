@@ -35,3 +35,9 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+
+.env
+.data/
+.deploy/
+test-results/
+playwright-report/
