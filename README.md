@@ -27,6 +27,10 @@ email address, and a password of 12–128 characters. The first player is the ro
 host. Share the room link; friends sign in or register before joining. A solo game
 uses the same server-owned room system.
 
+The root page is the game index. Woggle lives at `/woggle/` and Letterlight at
+`/letterlight/`. Earlier Woggle room invitations and password-reset links at the
+root automatically open the corresponding Woggle page.
+
 The host selects a 4×4 or 5×5 board, a 1–10 minute duration, and die orientation.
 Use the microphone icon to join room voice chat. Joining requests microphone
 permission; leaving voice, leaving the room, signing out, or losing the room

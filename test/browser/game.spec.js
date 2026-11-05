@@ -32,7 +32,9 @@ const test = base.extend({
 })
 
 async function register(page, url, name, email) {
-    await page.goto(url)
+    const target = new URL(url)
+    if (target.pathname === '/') target.pathname = '/woggle/'
+    await page.goto(target.toString())
     await page.getByRole('button', { name: 'Create account', exact: true }).click()
     await page.getByLabel('Display name').fill(name)
     await page.getByLabel('Email', { exact: true }).fill(email)
@@ -41,12 +43,35 @@ async function register(page, url, name, email) {
     await expect(page.locator('#connection-status')).toHaveText('Connected')
 }
 
+test('games hub opens both games and preserves old room and reset links', async ({ page, game }, info) => {
+    await page.goto(game.url)
+    await expect(page.getByRole('heading', { name: 'Pick your game.' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Play Woggle' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Play Letterlight' })).toBeVisible()
+    await page.screenshot({ path: info.outputPath('hub-desktop.png'), fullPage: true })
+    await page.setViewportSize({ width: 390, height: 844 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)
+    await page.screenshot({ path: info.outputPath('hub-mobile.png'), fullPage: true })
+    await page.getByRole('link', { name: 'Play Woggle' }).click()
+    await expect(page).toHaveURL(/\/woggle\/$/)
+    await expect(page.getByRole('heading', { name: 'Sign in to play' })).toBeVisible()
+    await page.goto(`${game.url}/?room=old-room-id`)
+    await expect(page).toHaveURL(/\/woggle\/\?room=old-room-id/)
+    await page.goto(`${game.url}/#reset=${'a'.repeat(64)}`)
+    await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible()
+    expect(page.url()).not.toContain('reset=')
+    await page.goto(game.url)
+    await page.getByRole('link', { name: 'Play Letterlight' }).click()
+    await expect(page).toHaveURL(/\/letterlight\/$/)
+    await expect(page.locator('#signin')).toBeVisible()
+})
+
 test('typing a display name keeps the signup form responsive', async ({ page, game }) => {
     const errors = []
     let crashed = false
     page.on('pageerror', error => errors.push(error.message))
     page.on('crash', () => { crashed = true })
-    await page.goto(game.url)
+    await page.goto(`${game.url}/woggle/`)
     await page.getByRole('button', { name: 'Create account', exact: true }).click()
     await page.evaluate(() => {
         window.clockMutations = 0

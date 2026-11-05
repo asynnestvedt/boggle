@@ -12,6 +12,7 @@ function createMailer(config) {
     }) : null
     return async (email, token) => {
         const link = new URL(config.publicUrl)
+        link.pathname = '/woggle/'
         link.hash = `reset=${token}`
         const message = {
             from: config.mailFrom, to: email, subject: 'Reset your Woggle password',

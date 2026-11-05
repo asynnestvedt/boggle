@@ -13,7 +13,7 @@
   <script src="/letterlight/main.js" type="module"></script>
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="/letterlight/" aria-label="Letterlight home"><span class="brand-mark" aria-hidden="true">✳</span><span>letterlight<span class="brand-dot">.</span></span></a><nav><a href="/">← Woggle</a><button id="help-open" class="icon-button" aria-label="How to play" type="button">?</button></nav></header>
+  <header class="topbar"><a class="brand" href="/letterlight/" aria-label="Letterlight home"><span class="brand-mark" aria-hidden="true">✳</span><span>letterlight<span class="brand-dot">.</span></span></a><nav><a href="/">← All games</a><button id="help-open" class="icon-button" aria-label="How to play" type="button">?</button></nav></header>
   <main>
     <div class="game-heading"><div><p class="eyebrow"><span class="pulse"></span> YOUR DAILY WORD RITUAL</p><h1>A little word.<br><em>A bright idea.</em></h1><p class="intro">One word, six chances. You've got this.</p></div><div class="day-card"><span>DAILY PUZZLE</span><strong id="day-label">—</strong><small>New word at midnight UTC</small></div></div>
     <div class="game-layout">
@@ -23,7 +23,7 @@
         <p id="message" class="message" role="status" aria-live="polite">Loading today's puzzle…</p>
         <div id="keyboard" class="keyboard" aria-label="On-screen keyboard"></div>
         <div id="finished" class="finished" hidden><div><strong id="result-title"></strong><span id="result-detail"></span></div><button id="share" type="button">Copy result ↗</button></div>
-        <div id="signin" class="signin" hidden><strong>Save your streak of bright ideas.</strong><p>Sign in with your Woggle account to play and pick up on any device.</p><a href="/?return=letterlight">Sign in to play <span aria-hidden="true">→</span></a></div>
+        <div id="signin" class="signin" hidden><strong>Save your streak of bright ideas.</strong><p>Sign in with your Woggle account to play and pick up on any device.</p><a href="/woggle/?return=letterlight">Sign in to play <span aria-hidden="true">→</span></a></div>
       </section>
       <aside class="guide"><span class="guide-icon" aria-hidden="true">✷</span><p class="eyebrow">A LITTLE GUIDANCE</p><h2>Every guess<br> gets you closer.</h2><p>Enter a five-letter word. The tiles will tell you how close you are.</p><div class="legend"><div><span class="sample correct">L</span><p><strong>Spot on</strong><br>Right letter, right place.</p></div><div><span class="sample present">I</span><p><strong>Almost there</strong><br>Right letter, different place.</p></div><div><span class="sample absent">T</span><p><strong>Not this time</strong><br>Letter isn't in the word.</p></div></div><div class="guide-foot">A fresh puzzle every day <span>✳</span></div></aside>
     </div>

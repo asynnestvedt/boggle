@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Woggle</title>
+    <meta name="description" content="Play a shared Boggle board with friends.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/normalize.min.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/app.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,700" rel="stylesheet">
+</head>
+<body>
+    <div class="header-container">
+        <header class="wrapper"><h1 class="title">WOGGLE</h1><a class="game-switch" href="/">All games <span aria-hidden="true">↗</span></a>
+            <div id="bggl-ctl-tray">
+                <button id="bggl-people" type="button" aria-label="Room and players, disconnected" aria-controls="room-panel" aria-expanded="true"><i class="material-icons" aria-hidden="true">people</i><span id="connection-dot" class="connection-dot" aria-hidden="true"></span><span id="bggl-people-count"></span></button>
+                <button id="voice-toggle" type="button" aria-label="Voice chat settings" aria-controls="voice-panel" aria-expanded="false"><i class="material-icons" aria-hidden="true">mic_off</i><span id="voice-dot" class="connection-dot" hidden></span></button>
+                <button id="bggl-fullscr" type="button" aria-label="Toggle fullscreen"><i class="material-icons" aria-hidden="true">fullscreen</i></button>
+            </div>
+            <div id="account-menu"></div>
+        </header>
+    </div>
+    <main class="main-container">
+        <section id="account" class="account-panel" aria-label="Your account"><p>Loading your account…</p></section>
+        <section id="game" class="main wrapper" aria-label="Game" hidden>
+            <span id="connection-status" class="visuallyhidden" role="status"></span>
+            <section id="voice-panel" class="voice-panel" aria-label="Voice chat" hidden>
+                <div class="room-heading"><div><span class="eyebrow">ROOM AUDIO</span><h2>Voice chat</h2></div><button id="voice-close" type="button" aria-label="Close voice settings">×</button></div>
+                <p id="voice-status" role="status" aria-live="polite">Voice chat is off.</p>
+                <p id="voice-members">Only people who join voice can hear each other.</p>
+                <div class="voice-actions"><button id="voice-join" type="button">Join voice</button><button id="voice-leave" type="button" hidden>Leave voice</button></div>
+                <label class="voice-setting"><span>Microphone</span><select id="voice-input"><option value="">System default</option></select></label>
+                <label class="voice-check"><input id="voice-mute" type="checkbox"> Mute microphone</label>
+                <label class="voice-setting"><span>Speaker</span><select id="voice-output"><option value="">System default</option></select></label>
+                <label class="voice-check"><input id="voice-deafen" type="checkbox"> Mute incoming audio</label>
+                <label class="voice-setting"><span>Volume</span><input id="voice-volume" type="range" min="0" max="100" value="100"></label>
+                <label class="voice-check"><input id="voice-echo" type="checkbox" checked> Echo cancellation</label>
+                <label class="voice-check"><input id="voice-noise" type="checkbox" checked> Noise suppression</label>
+                <p id="voice-output-note" class="voice-note" hidden>Speaker selection is unavailable in this browser. Use your system audio settings.</p>
+            </section>
+            <section id="room-panel" class="room-panel" aria-label="Room members">
+                <div class="room-heading"><div><span class="eyebrow">YOUR GAME</span><h2>Room &amp; players</h2></div><button id="close-room" type="button" aria-label="Close room panel">×</button></div>
+                <p>Share this link to invite friends to your room.</p>
+                <label for="roomid">Invite friends with this room link</label>
+                <div class="room-link"><input id="roomid" type="url" readonly><button id="bggl-copy-room" type="button">Copy link</button></div>
+                <h3>Players</h3><ul id="roster"></ul><div class="room-actions"><button id="new-room" type="button">New room</button><button id="leave-room" type="button">Leave room</button></div>
+                <div class="recent-groups"><h3>Recent groups</h3><p>Copy this room’s invitation link to share with a group you’ve played with.</p><div id="recent-groups-list">No recent groups yet.</div></div>
+            </section>
+            <p id="game-message" role="status" aria-live="polite"></p>
+            <p id="host-message" hidden>The room host starts the next round.</p>
+            <button id="claim-host" type="button" hidden>Become host (current host is offline)</button>
+            <p id="round-clock" role="timer" aria-label="Time remaining"></p>
+            <div id="pbarxinv" class="progress-bar"><div class="progress-inner"></div></div>
+            <div id="board" class="board soft-corners five-by-five" aria-label="Boggle board"></div>
+            <button id="bggl-save-word" type="button" hidden>Save word</button>
+            <p id="my-words"></p>
+            <section id="results" hidden><h2>Round results</h2><p>Review word validity and duplicates with your group. Click your words to exclude or restore them. Scores use the original house rule: word length minus two.</p><div id="score-list"></div></section>
+            <section id="settings" hidden>
+                <form>
+                    <div class="switch-field"><h2>Board size</h2>
+                        <input type="radio" id="size4" name="dimensions" value="4x4"><label for="size4">4 by 4</label>
+                        <input type="radio" id="size5" name="dimensions" value="5x5" checked><label for="size5">5 by 5</label>
+                    </div>
+                    <div class="switch-field"><h2>Duration</h2>
+                        <input type="radio" id="duration1" name="duration" value="60"><label for="duration1">1 min</label>
+                        <input type="radio" id="duration2" name="duration" value="120"><label for="duration2">2 min</label>
+                        <input type="radio" id="duration3" name="duration" value="180" checked><label for="duration3">3 min</label>
+                        <input type="radio" id="duration4" name="duration" value="240"><label for="duration4">4 min</label>
+                        <input type="radio" id="duration5" name="duration" value="300"><label for="duration5">5 min</label>
+                        <input type="radio" id="duration10" name="duration" value="600"><label for="duration10">10 min</label>
+                    </div>
+                    <div class="switch-field"><h2>Dice orientation</h2>
+                        <input type="radio" id="random" name="orientation" value="random" checked><label for="random">Random</label>
+                        <input type="radio" id="natural" name="orientation" value="natural"><label for="natural">Upright</label>
+                    </div>
+                    <button type="submit">Start round</button>
+                </form>
+            </section>
+        </section>
+    </main>
+    <script src="/js/main.js" type="module"></script>
+</body>
+</html>

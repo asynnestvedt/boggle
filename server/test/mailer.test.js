@@ -17,6 +17,6 @@ test('development reset emails are written outside public files, using the confi
     assert.equal(files.length, 1)
     const message = JSON.parse(await readFile(path.join(directory, 'outbox', files[0]), 'utf8'))
     assert.equal(message.to, 'player@example.com')
-    assert.ok(message.text.includes(`http://localhost:3000/#reset=${'a'.repeat(64)}`))
+    assert.ok(message.text.includes(`http://localhost:3000/woggle/#reset=${'a'.repeat(64)}`))
     assert.ok(!config.dataDir.startsWith(config.publicDir))
 })
